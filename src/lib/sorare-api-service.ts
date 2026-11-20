@@ -1,4 +1,5 @@
-import { UserCard, saveLocalCards } from './collection-service';
+import type { UserCard } from './collection-service';
+import { saveLocalCards } from './collection-service';
 
 const SORARE_GRAPHQL_ENDPOINT = 'https://api.sorare.com/graphql';
 

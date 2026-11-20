@@ -155,3 +155,6 @@ export async function fetchLiveSorareCards(slug: string): Promise<UserCard[]> {
     return MOCK_CARDS;
   }
 }
+export function saveLocalCards(cards: UserCard[]): void { try { localStorage.setItem('sorare_pilot_cards', JSON.stringify(cards)); } catch {} }
+
+export function seedSampleCollection(): UserCard[] { saveLocalCards(MOCK_CARDS); return MOCK_CARDS; }

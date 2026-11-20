@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { useState } from 'react';
-import { Trophy, ShieldCheck, Zap } from 'lucide-react';
+import { ShieldCheck } from 'lucide-react';
 
 interface Arena {
   id: string;

@@ -1,11 +1,12 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { useState, useEffect } from 'react';
-import { getLocalCards, UserCard } from '../lib/collection-service';
+import { getLocalCards } from '../lib/collection-service';
+import type { UserCard } from '../lib/collection-service';
 import {
   optimizeLineup,
   calculateCardExpectedScore,
 } from '../lib/lineup-service';
-import { Sparkles, Users, X, Trophy } from 'lucide-react';
+import { Sparkles, X, Trophy } from 'lucide-react';
 
 function LineupsPage() {
   const [cards, setCards] = useState<UserCard[]>([]);

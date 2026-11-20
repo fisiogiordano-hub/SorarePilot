@@ -1,13 +1,14 @@
 import { createFileRoute } from '@tanstack/react-router';
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
+type GameWeek = any;
+type Fixture = any;
 import {
   getLocalGameWeeks,
   getCurrentGameWeek,
-  GameWeek,
-  Fixture,
 } from '../lib/gameweek-service';
-import { getLocalCards, UserCard } from '../lib/collection-service';
-import { Calendar, ShieldAlert, Trophy, Clock, Users } from 'lucide-react';
+import { getLocalCards } from '../lib/collection-service';
+import type { UserCard } from '../lib/collection-service';
+import { Trophy, Clock, Users } from 'lucide-react';
 
 function GameWeekPage() {
   const [gameWeeks, setGameWeeks] = useState<GameWeek[]>([]);

@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { translations } from './translations';
 import type { Lang } from './translations';
 
@@ -597,7 +597,7 @@ interface SlotCardProps {
   t: (key: string) => string;
 }
 
-function SlotCard({ title, card, captainId, getL10, getStarterChance, onSetCaptain, t }: SlotCardProps) {
+function SlotCard({ title, card, captainId, getL10, onSetCaptain, t }: SlotCardProps) {
   if (!card) {
     return (
       <div className="border-2 border-dashed border-gray-800 rounded-xl p-4 flex flex-col items-center justify-center min-h-[220px] bg-gray-950 text-gray-500">

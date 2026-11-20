@@ -60,9 +60,12 @@ export interface SorareCard {
   pictureUrl?: string;
   listingStatus?: 'ACTIVE' | 'EXPIRED' | 'NOT_LISTED';
   askingPrice?: number;
+  sealed?: boolean;
+  inSeason?: boolean;
+  isInLineup?: boolean;
 }
 
-export type PilotTab = 'HOME' | 'SET' | 'MY_CLUB' | 'MISSIONS' | 'SCOUTING' | 'ARENA' | 'CALENDAR' | 'SELLING' | 'CRAFT' | 'LIVE' | 'ASSISTENZA' | 'SETTING';
+export type PilotTab = 'HOME' | 'SET' | 'MY_CLUB' | 'MISSIONS' | 'SCOUTING' | 'ARENA' | 'CALENDAR' | 'SELLING' | 'CRAFT' | 'LIVE' | 'COMMUNITY' | 'ASSISTENZA' | 'SETTING';
 export type MissionType = 'DECISIVE' | 'GOALS' | 'PASSES' | 'ATTACK_PASSES' | 'TACKLES';
 
 interface DailyMission {
@@ -1095,7 +1098,7 @@ export const HomeModule: React.FC<{
                 src="/title.png" 
                 alt="SorarePilot Title" 
                 className="max-w-[650px] sm:max-w-[850px] object-contain h-auto relative z-10 pointer-events-none"
-                style={{ imageRendering: 'high-quality', filter: 'brightness(1.3) contrast(1.1)' }}
+                style={{ imageRendering: 'auto', filter: 'brightness(1.3) contrast(1.1)' }}
                 onError={(e) => { e.currentTarget.style.display = 'none'; }}
               />
             </a>
@@ -1271,7 +1274,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, accountName,
                   src="/title.png" 
                   alt="SorarePilot Title" 
                   className="w-[215px] max-w-none object-contain h-auto relative z-10" 
-                  style={{ imageRendering: 'high-quality', filter: 'brightness(1.5) contrast(1.1)' }}
+                  style={{ imageRendering: 'auto', filter: 'brightness(1.5) contrast(1.1)' }}
                   onError={(e) => { e.currentTarget.style.display = 'none'; }} 
                 />
               </div>
@@ -1666,7 +1669,7 @@ const DailyMissionsModule: React.FC<DailyMissionsModuleProps> = ({
     setSubmitStatus(t('syncingMissions'));
 
     try {
-      const response = await fetch(`${API_BASE_URL}/api/fetch-missions`, {
+      const response: Response = await fetch(`${API_BASE_URL}/api/fetch-missions`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ token }),
@@ -1728,7 +1731,7 @@ const DailyMissionsModule: React.FC<DailyMissionsModuleProps> = ({
     }
 
     try {
-      const response = await fetch(`${API_BASE_URL}/api/submit-missions', {
+      const response = await fetch(`${API_BASE_URL}/api/submit-missions`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ token, submissions: submissionsPayload })
@@ -1739,7 +1742,7 @@ const DailyMissionsModule: React.FC<DailyMissionsModuleProps> = ({
 
       setSubmitStatus(t('missionsSentSuccess'));
     } catch (err: any) {
-      setSubmitStatus(`❌ Error: ${err.message}`);
+setSubmitStatus(`Error: ${err.message}`);
     } finally {
       setIsSubmitting(false);
     }
@@ -2259,7 +2262,7 @@ const SellingModule: React.FC<SellingModuleProps> = ({ cards, token, audioActive
         durationDays: c.lastDurationDays || 7
       }));
 
-      const response = await fetch(`${API_BASE_URL}/api/autosell-relist', {
+      const response = await fetch(`${API_BASE_URL}/api/autosell-relist`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ token, relists: payload })
@@ -2486,7 +2489,7 @@ export default function App() {
     }
   }, [musicActive, currentTrackIndex]);
 
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
+  const [_isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
     return Boolean(localStorage.getItem('sorare_auth_token') || localStorage.getItem('sorare_token'));
   });
   const [authError, setAuthError] = useState<string | null>(null);
@@ -2692,7 +2695,7 @@ export default function App() {
           body: JSON.stringify({ token: accessToken, after: cursor, first: 100 })
         });
 
-        const data = await response.json();
+        const data: any = await response.json();
         if (!response.ok) {
           throw new Error(data.error || 'Errore nel recupero delle carte');
         }
@@ -3148,16 +3151,16 @@ export default function App() {
               />
             )}
             {activeTab === 'CRAFT' && (
-              <CraftModule 
-                cards={cards} 
+              <CraftModule
+                audioActive={audioActive} 
                 notifications={notifications}
                 onClearNotifications={handleClearNotifications}
                 currentLang={currentLang}
               />
             )}
             {activeTab === 'LIVE' && (
-              <LiveModule 
-                cards={cards} 
+              <LiveModule
+                audioActive={audioActive} 
                 notifications={notifications} 
                 onClearNotifications={handleClearNotifications}
                 currentLang={currentLang}
@@ -3172,7 +3175,8 @@ export default function App() {
               />
             )}
             {activeTab === 'ASSISTENZA' && (
-              <AssistenzaModule 
+              <AssistenzaModule
+                audioActive={audioActive}
                 notifications={notifications}
                 onClearNotifications={handleClearNotifications}
                 currentLang={currentLang}

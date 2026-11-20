@@ -1,4 +1,4 @@
-import { UserCard } from './collection-service';
+import type { UserCard } from './collection-service';
 
 export interface LineupSlot {
   positionLabel: 'GK' | 'DEF' | 'MID' | 'FWD' | 'EXTRA';
@@ -16,7 +16,7 @@ export interface ProposedLineup {
  */
 export const calculateCardExpectedScore = (card: UserCard): number => {
   // Simulazione base score L5 per carte mock (es. 50 se non definito)
-  const baseL5 = 50 + (card.serialNumber ? card.serialNumber % 20 : 5);
+  const baseL5 = 50 + (card.last5Average || 50);
   const bonusMultiplier = 1 + card.bonus / 100;
   return Math.round(baseL5 * bonusMultiplier * 10) / 10;
 };
