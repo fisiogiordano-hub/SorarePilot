@@ -2420,7 +2420,6 @@ export default function App() {
   const [myClubSubTab, setMyClubSubTab] = useState<'GALLERIA' | 'ALLENAMENTO' | 'CASSAFORTE'>('GALLERIA');
   const [clubSortBy, setClubSortBy] = useState<string>('novita');
   
-  // Stato e gestione della lingua globale (IT, EN, FR, ES)
   const [currentLang, setCurrentLang] = useState<'IT' | 'EN' | 'FR' | 'ES'>(() => {
     return (localStorage.getItem('sorare_lang') as 'IT' | 'EN' | 'FR' | 'ES') || 'IT';
   });
@@ -2430,7 +2429,6 @@ export default function App() {
     localStorage.setItem('sorare_lang', lang);
   };
   
-  // Stati per i filtri della Galleria
   const [playerSearchQuery, setPlayerSearchQuery] = useState<string>('');
   const [inSeasonOnly, setInSeasonOnly] = useState<boolean>(false);
   const [hideListedCards, setHideListedCards] = useState<boolean>(false);
@@ -2452,7 +2450,6 @@ export default function App() {
   });
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
 
-  // Logica lettore musicale persistente (autonoma rispetto ad audioActive)
   const [currentTrackIndex, setCurrentTrackIndex] = useState<number>(0);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
@@ -2489,7 +2486,6 @@ export default function App() {
     }
   }, [musicActive, currentTrackIndex]);
 
-  // Stato autenticazione OAuth Sorare
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
     return Boolean(localStorage.getItem('sorare_auth_token') || localStorage.getItem('sorare_token'));
   });
@@ -2521,7 +2517,6 @@ export default function App() {
     localStorage.setItem('sorare_music', String(musicActive));
   }, [musicActive]);
 
-  // Gestione cronologia browser: impedisce che il tasto Indietro riapra OAuth o esca dall'app
   const navigateToTab = (tab: PilotTab) => {
     setActiveTab((current) => {
       if (current !== tab) {
@@ -2565,7 +2560,7 @@ export default function App() {
     }
   }, []);
 
-  const exchangeCodeForToken = async (code: string) => {
+ const exchangeCodeForToken = async (code: string) => {
     try {
       const res = await fetch(`${API_BASE_URL}/api/auth/sorare/callback`, {
         method: 'POST',
@@ -2601,12 +2596,11 @@ export default function App() {
     }
   };
 
- useEffect(() => {
+  useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const code = params.get('code');
 
     if (code) {
-      // Pulisce la barra dell'indirizzo per rimuovere ?code=...
       window.history.replaceState({}, document.title, window.location.pathname);
 
       setIsLoading(true);
@@ -2614,7 +2608,7 @@ export default function App() {
       exchangeCodeForToken(code);
     }
   }, []);
-  
+
   const handleToggleAudio = () => {
     const nextState = !audioActive;
     setAudioActive(nextState);
@@ -2645,7 +2639,6 @@ export default function App() {
     setAuthError(null);
     setIsLoading(true);
 
-    // Inserisci qui il tuo ID Client completo copiato dalla pagina Developer di Sorare
     const SORARE_CLIENT_ID = "ct8ISmS-NQQzjS-p9wkMKqURpJ0UnTlgQ3LIal9bcRU";
 
     const sorareAuthUrl =
@@ -2673,7 +2666,7 @@ export default function App() {
     setActiveTab('HOME');
   };
 
- const syncAllCardsInBackground = async (accessToken: string, silent = false) => {
+  const syncAllCardsInBackground = async (accessToken: string, silent = false) => {
     if (!silent) {
       setIsLoading(true);
       setSyncMessage('Sincronizzazione rapida in corso...');
