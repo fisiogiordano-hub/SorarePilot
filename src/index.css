@@ -1,0 +1,127 @@
+@import "tailwindcss";
+
+body {
+  margin: 0;
+  background-color: #09090b;
+  color: #f4f4f5;
+  font-family: system-ui, -apple-system, sans-serif;
+  cursor: url('/red-cursor.png') 0 0, auto !important;
+}
+
+/* ==========================================
+   FORZA IL CURSORE PERSONALIZZATO SU TUTTO
+   ========================================== */
+*, *::before, *::after,
+*:hover, *:active, *:focus, *:focus-visible,
+a, button, input, select, textarea, [role="button"] {
+  cursor: url('/red-cursor.png') 0 0, auto !important;
+}
+
+/* ==========================================
+   BARRA DI SCORRIMENTO PERSONALIZZATA (APPARE SOLO DOVE NECESSARIO)
+   ========================================== */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 8px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: #121216;
+  border-radius: 8px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #2a2a32;
+  border-radius: 8px;
+  border: 2px solid #121216;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #00bfff;
+}
+
+/* Supporto Firefox per scrollbar personalizzata */
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #2a2a32 #121216;
+}
+
+/* Logo Top Gun rifinito, ravvicinato e proporzionato */
+.sorare-topgun-logo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  margin: 2px 0 6px 0;
+  text-align: center;
+  width: 100%;
+}
+
+.logo-text {
+  font-size: 20px;
+  font-weight: 900;
+  color: #ffffff;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  z-index: 2;
+  padding: 0 10px;
+  background-color: #0a0a0c;
+  display: inline-block;
+}
+
+.wing-stripes {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  position: absolute;
+  top: 40%;
+  transform: translateY(-50%);
+  z-index: 1;
+  width: 48px;
+}
+
+.left-wings {
+  left: 0px;
+}
+
+.right-wings {
+  right: 0px;
+}
+
+.stripe {
+  height: 3px;
+  width: 100%;
+  transform: skewX(-30deg);
+}
+
+/* Dal basso verso l'alto: Bianco in basso -> Azzurro/lavanda al centro -> Blu profondo in alto */
+.stripe.cyan { background-color: #ffffff; }    /* Striscia in basso: Bianca */
+.stripe.blue { background-color: #818cf8; }    /* Striscia al centro: Azzurro/lavanda (da PILOT) */
+.stripe.dark-blue { background-color: #1d4ed8; } /* Striscia in alto: Blu profondo */
+
+.logo-bottom-bar {
+  width: 82%;
+  position: relative;
+  margin-top: 3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.white-line {
+  height: 4px;
+  background-color: #ffffff;
+  width: 100%;
+  border-radius: 2px;
+}
+
+.logo-star {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: #ffffff;
+  font-size: 13px;
+  background-color: #0a0a0c;
+  padding: 0 4px;
+  line-height: 1;
+}
