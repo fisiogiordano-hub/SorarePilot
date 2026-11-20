@@ -2642,7 +2642,7 @@ export default function App() {
     setAuthError(null);
     setIsLoading(true);
 
-    const SORARE_CLIENT_ID = "ct8ISmS-NQQzjS-p9wkMKqURpJ0UnTlgQ3LIal9bcRU";
+    const SORARE_CLIENT_ID = import.meta.env.VITE_SORARE_CLIENT_ID || "";
 
     const sorareAuthUrl =
       `https://sorare.com/oauth/authorize` +
