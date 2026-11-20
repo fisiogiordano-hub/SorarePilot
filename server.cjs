@@ -1006,6 +1006,327 @@ app.post('/api/auth/sorare/callback', async (req, res) => {
       {},
       accessToken
     );
+require('dotenv').config();
+const express = require('express');
+const cors = require('cors');
+const bcrypt = require('bcryptjs');
+const fs = require('fs');
+const path = require('path');
+
+const app = express();
+const PORT = process.env.PORT || 3000;
+
+const MISSIONS_FILE = path.join(__dirname, 'missioni-oggi.json');
+const SALES_TRACKER_FILE = path.join(__dirname, 'sales-tracker.json');
+const DIST_DIR = path.join(__dirname, 'dist');
+const SORARE_API = 'https://api.sorare.com/graphql';
+const SORARE_TOKEN_URL = process.env.SORARE_TOKEN_URL || 'https://api.sorare.com/oauth/token';
+
+// Credenziali e configurazione OAuth da variabili d'ambiente
+const SORARE_CLIENT_ID = process.env.SORARE_CLIENT_ID || '';
+const SORARE_CLIENT_SECRET = process.env.SORARE_CLIENT_SECRET || '';
+const SORARE_REDIRECT_URI = process.env.SORARE_REDIRECT_URI || '';
+
+// Configurazione CORS tramite ALLOWED_ORIGINS
+const allowedOrigins = (process.env.ALLOWED_ORIGINS || '')
+  .split(',')
+  .map(origin => origin.trim())
+  .filter(Boolean);
+
+const corsOptions = {
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.length === 0) {
+      return callback(null, true);
+    }
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+    return callback(new Error(`Origine non consentita da CORS: ${origin}`));
+  },
+  methods: ['GET', 'POST', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+};
+
+app.use(cors(corsOptions));
+app.use(express.json({ limit: '2mb' }));
+
+// -------------------------------------------------------------
+// FUNZIONI COMUNI
+// -------------------------------------------------------------
+
+function sorareHeaders(token = null) {
+  const headers = {
+    'Content-Type': 'application/json',
+    'Accept': 'application/json',
+    'User-Agent': 'Mozilla/5.0'
+  };
+
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+
+  return headers;
+}
+
+async function sorareGraphQL(query, variables = {}, token = null) {
+  const response = await fetch(SORARE_API, {
+    method: 'POST',
+    headers: sorareHeaders(token),
+    body: JSON.stringify({ query, variables })
+  });
+
+  const result = await response.json();
+
+  if (!response.ok) {
+    throw new Error(
+      result.errors?.[0]?.message ||
+      `Errore HTTP Sorare: ${response.status}`
+    );
+  }
+
+  if (result.errors?.length) {
+    throw new Error(result.errors[0].message);
+  }
+
+  return result.data;
+}
+
+function getNextGameWeekWindow(now = new Date()) {
+  // Sorare Football Game Weeks run Tue -> Fri and Fri -> Tue (cutoff ~16:00 CET / 15:00 UTC)
+  const current = new Date(now.getTime());
+  const day = current.getUTCDay(); // 0=Sun, 1=Mon, 2=Tue, 3=Wed, 4=Thu, 5=Fri, 6=Sat
+  const hourUtc = current.getUTCHours();
+
+  // Prima individua l'inizio della GW attualmente in corso/live
+  const currentGwStartUtc = new Date(Date.UTC(
+    current.getUTCFullYear(),
+    current.getUTCMonth(),
+    current.getUTCDate(),
+    15, 0, 0, 0
+  ));
+
+  if (day === 2) {
+    if (hourUtc < 15) {
+      currentGwStartUtc.setUTCDate(currentGwStartUtc.getUTCDate() - 4);
+    }
+  } else if (day === 3 || day === 4) {
+    currentGwStartUtc.setUTCDate(currentGwStartUtc.getUTCDate() - (day - 2));
+  } else if (day === 5) {
+    if (hourUtc < 15) {
+      currentGwStartUtc.setUTCDate(currentGwStartUtc.getUTCDate() - 3);
+    }
+  } else if (day === 6) {
+    currentGwStartUtc.setUTCDate(currentGwStartUtc.getUTCDate() - 1);
+  } else if (day === 0) {
+    currentGwStartUtc.setUTCDate(currentGwStartUtc.getUTCDate() - 2);
+  } else if (day === 1) {
+    currentGwStartUtc.setUTCDate(currentGwStartUtc.getUTCDate() - 3);
+  }
+
+  const currentStartDay = currentGwStartUtc.getUTCDay();
+  const currentCycleDays = currentStartDay === 2 ? 3 : 4; // Mar->Ven (3gg) o Ven->Mar (4gg)
+
+  // La PROSSIMA Game Week inizia esattamente alla fine del ciclo della GW live
+  const nextGwStartUtc = new Date(currentGwStartUtc.getTime());
+  nextGwStartUtc.setUTCDate(nextGwStartUtc.getUTCDate() + currentCycleDays);
+  nextGwStartUtc.setUTCHours(15, 0, 0, 0);
+
+  const nextStartDay = nextGwStartUtc.getUTCDay();
+  const nextCycleDays = nextStartDay === 2 ? 3 : 4;
+
+  const nextGwEndUtc = new Date(nextGwStartUtc.getTime());
+  nextGwEndUtc.setUTCDate(nextGwEndUtc.getUTCDate() + nextCycleDays);
+  nextGwEndUtc.setUTCHours(23, 59, 59, 999);
+
+  return {
+    startMs: nextGwStartUtc.getTime(),
+    endMs: nextGwEndUtc.getTime(),
+    startIso: nextGwStartUtc.toISOString(),
+    endIso: nextGwEndUtc.toISOString()
+  };
+}
+
+function extractNextGameWeekInfo(activeClub, nextGwWindow) {
+  const games = Array.isArray(activeClub?.upcomingGames) ? activeClub.upcomingGames : [];
+  const clubSlug = String(activeClub?.slug || '').toLowerCase();
+  const clubName = String(activeClub?.name || '').toLowerCase();
+
+  const fallbackCompetition =
+    activeClub?.domesticLeague?.displayName ||
+    activeClub?.domesticLeague?.name ||
+    activeClub?.country?.name ||
+    '';
+
+  for (const game of games) {
+    if (!game || !game.date) continue;
+    const gameMs = Date.parse(game.date);
+    if (!Number.isFinite(gameMs)) continue;
+
+    // Considera esclusivamente partite appartenenti alla PROSSIMA GW (mai alla GW live o già passate)
+    const isInNextGw = gameMs >= nextGwWindow.startMs && gameMs <= nextGwWindow.endMs;
+    if (!isInNextGw) continue;
+
+    const homeSlug = String(game.homeTeam?.slug || '').toLowerCase();
+    const homeName = String(game.homeTeam?.name || '').toLowerCase();
+
+    const isHome =
+      (clubSlug && homeSlug && clubSlug === homeSlug) ||
+      (clubName && homeName && clubName === homeName);
+
+    const opponent = isHome
+      ? (game.awayTeam?.name || game.awayTeam?.slug || 'Avversario')
+      : (game.homeTeam?.name || game.homeTeam?.slug || 'Avversario');
+
+    const competition =
+      game.competition?.displayName ||
+      game.competition?.name ||
+      game.competition?.slug ||
+      fallbackCompetition;
+
+    return {
+      hasUpcomingGame: true,
+      opponent,
+      isHome,
+      nextGameDate: game.date,
+      competition,
+      gameWeekWindow: `Next GW (${nextGwWindow.startIso.slice(0, 10)}..${nextGwWindow.endIso.slice(0, 10)})`
+    };
+  }
+
+  return {
+    hasUpcomingGame: false,
+    opponent: null,
+    isHome: false,
+    nextGameDate: null,
+    competition: fallbackCompetition,
+    gameWeekWindow: `Next GW (${nextGwWindow.startIso.slice(0, 10)}..${nextGwWindow.endIso.slice(0, 10)})`
+  };
+}
+
+function loadSalesTracker() {
+  try {
+    if (!fs.existsSync(SALES_TRACKER_FILE)) {
+      return { users: {} };
+    }
+    const raw = fs.readFileSync(SALES_TRACKER_FILE, 'utf8');
+    const parsed = JSON.parse(raw);
+    return parsed && typeof parsed === 'object' && parsed.users
+      ? parsed
+      : { users: {} };
+  } catch (error) {
+    console.error('Errore lettura sales-tracker.json:', error);
+    return { users: {} };
+  }
+}
+
+function saveSalesTracker(trackerData) {
+  try {
+    fs.writeFileSync(SALES_TRACKER_FILE, JSON.stringify(trackerData, null, 2), 'utf8');
+  } catch (error) {
+    console.error('Errore salvataggio sales-tracker.json:', error);
+  }
+}
+
+function getUserTracker(trackerData, userKey) {
+  if (!trackerData.users[userKey]) {
+    trackerData.users[userKey] = {
+      initialized: false,
+      cards: {}
+    };
+  }
+  return trackerData.users[userKey];
+}
+
+// -------------------------------------------------------------
+// HEALTH CHECK
+// -------------------------------------------------------------
+
+app.get('/api/health', (req, res) => {
+  res.json({
+    status: 'ok',
+    timestamp: new Date().toISOString()
+  });
+});
+
+// -------------------------------------------------------------
+// CALLBACK OAUTH SORARE (SCAMBIO CODE -> ACCESS TOKEN)
+// -------------------------------------------------------------
+
+app.post('/api/auth/sorare/callback', async (req, res) => {
+  const { code, redirectUri } = req.body || {};
+
+  if (!code) {
+    return res.status(400).json({
+      error: 'Codice di autorizzazione mancante.'
+    });
+  }
+
+  const effectiveRedirectUri = redirectUri || SORARE_REDIRECT_URI;
+
+  if (!SORARE_CLIENT_ID || !SORARE_CLIENT_SECRET || !effectiveRedirectUri) {
+    return res.status(500).json({
+      error: 'Configurazione OAuth Sorare incompleta sul server (SORARE_CLIENT_ID, SORARE_CLIENT_SECRET, SORARE_REDIRECT_URI).'
+    });
+  }
+
+  try {
+    const params = new URLSearchParams({
+      client_id: SORARE_CLIENT_ID,
+      client_secret: SORARE_CLIENT_SECRET,
+      code: String(code),
+      grant_type: 'authorization_code',
+      redirect_uri: effectiveRedirectUri
+    });
+
+    const tokenResponse = await fetch(SORARE_TOKEN_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'Accept': 'application/json',
+        'User-Agent': 'Mozilla/5.0'
+      },
+      body: params.toString()
+    });
+
+    const rawText = await tokenResponse.text();
+    let tokenData = null;
+
+    try {
+      tokenData = JSON.parse(rawText);
+    } catch {
+      console.error(
+        `Risposta non-JSON da Sorare (${SORARE_TOKEN_URL}) [HTTP ${tokenResponse.status}]:`,
+        rawText.slice(0, 500)
+      );
+      return res.status(502).json({
+        error: `Sorare ha risposto con formato non valido (HTTP ${tokenResponse.status}) invece di JSON.`
+      });
+    }
+
+    if (!tokenResponse.ok || !tokenData.access_token) {
+      return res.status(400).json({
+        error:
+          tokenData.error_description ||
+          tokenData.error ||
+          'Impossibile ottenere il token OAuth da Sorare.'
+      });
+    }
+
+    const accessToken = tokenData.access_token;
+
+    const userData = await sorareGraphQL(
+      `
+        query GetOAuthUser {
+          currentUser {
+            id
+            nickname
+            slug
+          }
+        }
+      `,
+      {},
+      accessToken
+    );
 
     const nickname = userData?.currentUser?.nickname || 'SorareUser';
 
@@ -1962,6 +2283,18 @@ app.post('/api/submit-missions', async (req, res) => {
 });
 
 // -------------------------------------------------------------
+// SERVIZIO FRONTEND STATICO (BUILD VITE / DIST)
+// -------------------------------------------------------------
+
+if (fs.existsSync(DIST_DIR)) {
+  app.use(express.static(DIST_DIR));
+
+  app.get(/^(?!\/api).*/, (req, res) => {
+    res.sendFile(path.join(DIST_DIR, 'index.html'));
+  });
+}
+
+// -------------------------------------------------------------
 // AVVIO SERVER
 // -------------------------------------------------------------
 
@@ -1971,5 +2304,6 @@ app.listen(PORT, () => {
   console.log(`🌐 Porta: ${PORT}`);
   console.log(`📁 Missioni: ${MISSIONS_FILE}`);
   console.log(`📁 Tracker vendite: ${SALES_TRACKER_FILE}`);
+  console.log(`📦 Frontend dist: ${DIST_DIR}`);
   console.log('======================================');
 });
