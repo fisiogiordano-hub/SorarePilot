@@ -2412,7 +2412,7 @@ const CraftModule: React.FC<{
   );
 };
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || `${API_BASE_URL}';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
 const REDIRECT_URI = import.meta.env.VITE_REDIRECT_URI || window.location.origin;
 
 export default function App() {
@@ -2673,7 +2673,7 @@ export default function App() {
     setActiveTab('HOME');
   };
 
-  const syncAllCardsInBackground = async (accessToken: string, silent = false) => {
+ const syncAllCardsInBackground = async (accessToken: string, silent = false) => {
     if (!silent) {
       setIsLoading(true);
       setSyncMessage('Sincronizzazione rapida in corso...');
@@ -2694,100 +2694,6 @@ export default function App() {
     try {
       while (hasNext) {
         const response = await fetch(`${API_BASE_URL}/api/user-cards`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ token: accessToken, after: cursor, first: 100 })
-        });
-
-        const data = await response.json();
-        if (!response.ok) {
-          throw new Error(data.error || 'Errore nel recupero delle carte');
-        }
-        const newCards: SorareCard[] = (data.cards || []).map((c: any) => ({
-          id: c.id,
-          name: c.name || c.slug || 'Giocatore',
-          position: c.position || 'Forward',
-          rarity: c.rarity || 'LIMITED',
-          team: c.team || '',
-          l10Average: c.l10Average || 0,
-          l5Average: c.l5Average || 0,
-          priceEur: c.priceEur || 0,
-          xpBonus: c.xpBonus || 0,
-          isAvailable: c.isAvailable !== undefined ? c.isAvailable : true,
-          hasUpcomingGame: c.hasUpcomingGame !== undefined ? c.hasUpcomingGame : false,
-          opponent: c.opponent || 'Nessun match oggi',
-          isHome: c.isHome ?? true,
-          pictureUrl: c.pictureUrl || 'https://images.sorare.com/cards/default.png',
-          slug: c.slug,
-          serialNumber: c.serialNumber,
-          listingStatus: c.listingStatus || 'EXPIRED',
-          askingPrice: c.askingPrice || c.priceEur || 0,
-          sealed: c.sealed || false,
-          inSeason: c.inSeason || false,
-          isInLineup: c.isInLineup || false
-        }));
-        accumulatedCards = [...accumulatedCards, ...newCards];
-        setCards([...accumulatedCards]);
-
-        if (releaseOverlayTimer) {
-          clearTimeout(releaseOverlayTimer);
-          setIsLoading(false);
-          setSyncMessage(null);
-        }
-
-        hasNext = data.pageInfo?.hasNextPage || false;
-        cursor = data.pageInfo?.endCursor || null;
-      }
-
-      localStorage.setItem('sorare_cards', JSON.stringify(accumulatedCards));
-      setNotifications((prev) => [
-        {
-          id: `sync-${Date.now()}`,
-          title: 'Sincronizzazione completata',
-          message: `${accumulatedCards.length} carte aggiornate con successo.`
-        },
-        ...prev
-      ]);
-    } catch (err) {
-      console.error('Errore durante il download:', err);
-      if (!silent) {
-        setSyncMessage('❌ Errore sincronizzazione carte');
-        await new Promise(resolve => setTimeout(resolve, 1000));
-      }
-    } finally {
-      if (releaseOverlayTimer) clearTimeout(releaseOverlayTimer);
-      setIsLoading(false);
-      setSyncMessage(null);
-      setIsBackgroundSyncing(false);
-    }
-  };
-
-  const handleManualSync = () => {
-    if (!token || isBackgroundSyncing) return;
-    syncAllCardsInBackground(token, false);
-  };
-
-  const syncAllCardsInBackground = async (accessToken: string, silent = false) => {
-    if (!silent) {
-      setIsLoading(true);
-      setSyncMessage('Sincronizzazione rapida in corso...');
-    }
-    setIsBackgroundSyncing(true);
-
-    const releaseOverlayTimer = !silent
-      ? setTimeout(() => {
-          setIsLoading(false);
-          setSyncMessage(null);
-        }, 2200)
-      : null;
-
-    let hasNext = true;
-    let cursor: string | null = null;
-    let accumulatedCards: SorareCard[] = [];
-
-    try {
-      while (hasNext) {
-        const response = await fetch(`${API_BASE_URL}/api/user-cards', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ token: accessToken, after: cursor, first: 100 })
@@ -2971,7 +2877,6 @@ export default function App() {
                 return ['limited', 'rare', 'super_rare', 'unique'].includes(rarity);
               });
 
-              // Filtri avanzati
               const filteredProCards = proCards.filter((card: any) => {
                 const matchesSearch = 
                   (card.name || '').toLowerCase().includes(playerSearchQuery.toLowerCase()) ||
@@ -2985,7 +2890,6 @@ export default function App() {
                 return true;
               });
 
-              // Ordinamento dinamico
               const sortedProCards = [...filteredProCards].sort((a: any, b: any) => {
                 if (clubSortBy === 'punteggio_max') {
                   return (b.l5Average || 0) - (a.l5Average || 0);
@@ -3015,7 +2919,6 @@ export default function App() {
                     </div>
                   </div>
 
-                  {/* Sotto-tab: Galleria, Allenamento, Cassaforte */}
                   <div className="flex flex-col gap-4 border-b border-[#2a2a32] pb-4">
                     <div className="flex justify-between items-center flex-wrap gap-4">
                       <div className="flex space-x-2">
@@ -3051,7 +2954,6 @@ export default function App() {
                         </button>
                       </div>
 
-                      {/* Menu di Ordinamento */}
                       {myClubSubTab === 'GALLERIA' && proCards.length > 0 && (
                         <div className="flex items-center space-x-2 bg-[#16161a] border border-[#2a2a32] px-3 py-1.5 rounded-xl">
                           <span className="text-[11px] font-bold text-zinc-400 uppercase tracking-wide">{translations[currentLang]?.sortBy || 'Ordina per'}:</span>
@@ -3071,7 +2973,6 @@ export default function App() {
                       )}
                     </div>
 
-                    {/* Barra dei Filtri Richiesti */}
                     {myClubSubTab === 'GALLERIA' && (
                       <div className="flex flex-wrap items-center gap-3 bg-[#16161a] border border-[#2a2a32] p-3 rounded-xl mt-2">
                         <div className="flex-1 min-w-[220px]">

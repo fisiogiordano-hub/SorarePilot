@@ -65,7 +65,7 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({
       const rarity = formatRarity(card.rarity);
       // Le carte SET non hanno valore economico sul mercato
       if (rarity === 'custom') return acc;
-      
+
       // Valore reale della carta se presente, altrimenti stima predefinita per la rarità
       const cardValue = card.estimatedValue ?? (
         rarity === 'unique' ? 1500 :
@@ -93,7 +93,7 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({
           <span className="text-xs uppercase tracking-wider text-[#34d399] font-bold">Sorare Pilot</span>
           <h1 className="text-3xl font-extrabold mt-1">Gestione Collezione</h1>
           <p className="text-sm text-gray-400 mt-1 flex items-center gap-2">
-            Account collegato: 
+            Account collegato:
             <span className="bg-[#10b981]/20 text-[#34d399] px-2 py-0.5 rounded font-mono text-xs">
               {nickname}
             </span>
@@ -176,4 +176,30 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({
             <div key={card.id} className="bg-[#131822] border border-[#1e2638] rounded-xl p-4 flex flex-col justify-between hover:border-[#10b981] transition">
               <div>
                 <div className="flex justify-between items-center mb-2">
-                  <span className={`text-[10px] font-extrabold uppercase px-2
+                  <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded bg-[#1e2638] text-[#34d399]">
+                    {rarityFormatted === 'custom' ? 'SET' : rarityFormatted.replace('_', ' ')}
+                  </span>
+                  {card.serialNumber && (
+                    <span className="text-xs text-gray-400 font-mono">
+                      #{card.serialNumber}{card.maxSerial ? `/${card.maxSerial}` : ''}
+                    </span>
+                  )}
+                </div>
+                <h3 className="font-bold text-white truncate">{card.name}</h3>
+                <p className="text-xs text-gray-400 mt-1">
+                  {(card.position || []).join(', ') || 'N/D'}
+                </p>
+              </div>
+              <div className="mt-4 pt-3 border-t border-[#1e2638] flex justify-between items-center text-xs">
+                <span className="text-gray-400">L5: <strong className="text-white">{card.l5Score ?? '—'}</strong></span>
+                <span className="text-[#34d399] font-semibold">
+                  {rarityFormatted === 'custom' ? 'SET' : `€${(card.estimatedValue ?? 0).toLocaleString()}`}
+                </span>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
