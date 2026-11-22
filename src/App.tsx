@@ -1097,7 +1097,7 @@ export const HomeModule: React.FC<{
                 src="/title.png" 
                 alt="SorarePilot Title" 
                 className="max-w-[650px] sm:max-w-[850px] object-contain h-auto relative z-10 pointer-events-none"
-                style={{ imageRendering: 'auto', filter: 'brightness(1.3) contrast(1.1)' }}
+                style={{ imageRendering: "auto", filter: "brightness(1.3) contrast(1.1)" }}
                 onError={(e) => { e.currentTarget.style.display = 'none'; }}
               />
             </a>
