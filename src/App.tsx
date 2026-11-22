@@ -136,7 +136,7 @@ const NotificationBell: React.FC<{
       >
         <Bell className="h-5 w-5 text-zinc-300 group-hover:text-amber-400 transition-transform group-hover:scale-110" />
         {hasNotifications && (
-          <span className="absolute -top-1.5 -right-1.5 min-w-[22px] h-[22px] px-1 rounded-full bg-red-600 text-white text-[11px] font-black flex items-center justify-center border-2 border-[#0e0e12] shadow-[0_0_10px_rgba(220,38,38,0.9)]">
+          <span className="absolute -bottom-1.5 -right-1.5 min-w-[22px] h-[22px] px-1 rounded-full bg-red-600 text-white text-[11px] font-black flex items-center justify-center border-2 border-[#0e0e12] shadow-[0_0_10px_rgba(220,38,38,0.9)]">
             {count}
           </span>
         )}
@@ -145,7 +145,7 @@ const NotificationBell: React.FC<{
       {isOpen && hasNotifications && (
         <div className="absolute right-0 mt-3 w-80 bg-[#16161a] border border-[#2a2a32] rounded-2xl p-4 shadow-2xl z-50 space-y-3">
           <div className="flex justify-between items-center border-b border-[#2a2a32] pb-2">
-            <h4 className="text-xs font-black text-white uppercase tracking-wider">{t('notificationCenterHeader') || 'Centro Notifiche'} ({count})</h4>
+            <h4 className="text-xs font-black text-white uppercase tracking-wider">'Notifiche' ({count})</h4>
             <div className="flex items-center space-x-2">
               <button
                 type="button"
@@ -156,7 +156,7 @@ const NotificationBell: React.FC<{
                 }}
                 className="text-[10px] font-bold text-indigo-400 hover:text-indigo-300 uppercase cursor-pointer"
               >
-                {t('markAsRead') || 'Segna lette'}
+                'Segna come lette'
               </button>
               <button 
                 type="button" 
@@ -242,8 +242,6 @@ export const AssistenzaModule: React.FC<{
             href={`https://${item.url.replace(/^https?:\/\//, '')}`}
             target="_blank"
             rel="noopener noreferrer"
-            onMouseEnter={() => { if (audioActive) sounds.playHover(); }}
-            onClick={() => { if (audioActive) sounds.playClick(); }}
             className="bg-[#16161a] hover:bg-[#1f1f26] border border-[#2a2a32] hover:border-indigo-500/50 p-5 rounded-2xl flex items-center justify-between transition-all group shadow-md cursor-pointer"
           >
             <div className="flex items-center space-x-4 overflow-hidden">
@@ -326,8 +324,6 @@ export const CommunityModule: React.FC<{
             href={`https://${item.url.replace(/^https?:\/\//, '')}`}
             target="_blank"
             rel="noopener noreferrer"
-            onMouseEnter={() => { if (audioActive) sounds.playHover(); }}
-            onClick={() => { if (audioActive) sounds.playClick(); }}
             className="bg-[#16161a] hover:bg-[#1f1f26] border border-[#2a2a32] hover:border-indigo-500/50 p-5 rounded-2xl flex items-center justify-between transition-all group shadow-md cursor-pointer"
           >
             <div className="flex items-center space-x-4 overflow-hidden">
@@ -755,7 +751,7 @@ export const HomeModule: React.FC<{
       setIsTitleHovered(false);
       return;
     }
-    const scaleFactor = isLogoHovered ? 1.05 : 1;
+    const scaleFactor = isTitleHovered ? 1.05 : 1;
     const baseW = rect.width / scaleFactor;
     const baseH = rect.height / scaleFactor;
     const cx = rect.left + rect.width / 2;
@@ -811,9 +807,12 @@ export const HomeModule: React.FC<{
     rel="noopener noreferrer"
     className="transition-transform duration-300 hover:scale-110 cursor-pointer drop-shadow-[0_0_15px_rgba(255,255,255,0.4)] shrink-0"
     title={t('goToSorare') || 'Vai al sito ufficiale di Sorare'}
+    onMouseEnter={() => { if (audioActive) sounds.playHover(); }}
+    onClick={() => { if (audioActive) sounds.playClick(); }}
   >
     <img 
-      src="/sorare-logo.png" 
+      src="/sorare-logo.png"
+              style={{ transform: 'translateX(38px) scale(1.08)' }} 
       alt="Sorare Official Logo" 
       className="w-12 h-12 sm:w-54 sm:h-24 object-contain"
     />
@@ -1040,11 +1039,11 @@ export const HomeModule: React.FC<{
       <div className="relative flex flex-col items-center justify-center my-auto translate-y-32 sm:translate-y-40 pointer-events-none">
         <div className="flex flex-col items-center pointer-events-none">
           <div
-            ref={circleRef}
+            ref={circleRef} onMouseEnter={() => setIsCircleHovered(true)} onMouseLeave={() => setIsCircleHovered(false)}
             style={{
-              transform: isLogoHovered ? 'scale(1.05)' : 'scale(1)',
+              transform: isCircleHovered ? 'scale(1.05)' : 'scale(1)',
               transition: 'transform 300ms ease',
-              cursor: isLogoHovered ? 'pointer' : 'default',
+              cursor: isCircleHovered ? 'pointer' : 'default',
             }}
             className="w-72 h-72 sm:w-[380px] sm:h-[380px] rounded-full overflow-hidden shrink-0 flex items-center justify-center bg-[#0a0a0c] border-[7px] border-zinc-200 pointer-events-auto"
           >
@@ -1053,7 +1052,7 @@ export const HomeModule: React.FC<{
               target="_blank"
               rel="noopener noreferrer"
               onClick={(e) => {
-                if (!isLogoHovered) {
+                if (!isCircleHovered) {
                   e.preventDefault();
                   return;
                 }
@@ -1078,19 +1077,19 @@ export const HomeModule: React.FC<{
               target="_blank"
               rel="noopener noreferrer"
               onClick={(e) => {
-                if (!isLogoHovered) {
+                if (!isCircleHovered) {
                   e.preventDefault();
                   return;
                 }
                 if (audioActive) sounds.playClick();
               }}
               style={{
-                transform: isLogoHovered ? 'scale(1.05)' : 'scale(1)',
+                transform: isCircleHovered ? 'scale(1.05)' : 'scale(1)',
                 transition: 'transform 300ms ease',
                 filter: 'drop-shadow(0 0 22px rgba(99, 102, 241, 0.8)) brightness(1.05)',
-                cursor: isLogoHovered ? 'pointer' : 'default',
+                cursor: isCircleHovered ? 'pointer' : 'default',
               }}
-              className="relative inline-flex justify-center pointer-events-auto"
+              onMouseEnter={() => setIsTitleHovered(true)} onMouseLeave={() => setIsTitleHovered(false)} className="relative inline-flex justify-center pointer-events-auto"
               title={t('visitYoutube') || 'Visita il canale YouTube'}
             >
               <img 
@@ -1248,7 +1247,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, accountName,
               onMouseEnter={() => { if (audioActive) sounds.playHover(); }}
               onClick={() => {
                 if (audioActive) sounds.playClick();
-                setActiveTab('HOME');
+    setActiveTab('HOME');
               }}
               className="flex flex-col items-center cursor-pointer p-1 rounded-2xl transition-all hover:scale-105"
             >
@@ -1326,7 +1325,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, accountName,
               onMouseEnter={() => { if (audioActive) sounds.playHover(); }}
               onClick={() => {
                 if (audioActive) sounds.playClick();
-                setActiveTab('HOME');
+    setActiveTab('HOME');
               }}
               className={`w-full px-4 py-3 rounded-xl flex items-center space-x-3.5 transition-all group cursor-pointer ${getItemStyle('HOME')}`}
             >
@@ -1344,7 +1343,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, accountName,
               onMouseEnter={() => { if (audioActive) sounds.playHover(); }}
               onClick={() => {
                 if (audioActive) sounds.playClick();
-                setActiveTab('HOME');
+    setActiveTab('HOME');
               }}
               className={`w-full px-4 py-3 rounded-xl flex items-center space-x-3.5 transition-all group cursor-pointer ${getItemStyle('HOME')}`}
             >
@@ -2439,6 +2438,7 @@ export default function App() {
   
   const [token, setToken] = useState<string>(() => localStorage.getItem('sorare_token') || '');
   const [accountName, setAccountName] = useState<string>(() => localStorage.getItem('sorare_account_name') || '');
+  const [accountAvatarUrl, setAccountAvatarUrl] = useState<string>(() => localStorage.getItem('sorare_account_avatar') || '');
   const [isLoading, setIsLoading] = useState(false);
   const [isBackgroundSyncing, setIsBackgroundSyncing] = useState(false);
   const [syncMessage, setSyncMessage] = useState<string | null>(null);
@@ -2460,35 +2460,69 @@ export default function App() {
     '/audio/1.mp3',
     '/audio/2.mp3',
     '/audio/3.mp3',
-    '/audio/4.mp3'
+    '/audio/4.mp3',
+    '/audio/5.mp3',
+    '/audio/6.mp3'
   ];
 
+  // Moltiplicatori per singola traccia (1.0 = neutro; <1.0 riduce, >1.0 alza fino a 1.0)
+  const trackVolumeMultipliers: number[] = [1.0, 1.0, 1.0, 1.0, 1.0, 1.0];
+  const baseMusicVolume = 0.15;
+
+  const getTrackVolume = (index: number) => {
+    const mult = trackVolumeMultipliers[index] ?? 1.0;
+    return Math.min(1, Math.max(0, baseMusicVolume * mult));
+  };
+
+  const resetPlaylistToStart = (shouldPause = true) => {
+    setCurrentTrackIndex(0);
+    const audio = audioRef.current;
+    if (audio) {
+      if (shouldPause) {
+        audio.pause();
+      }
+      const firstTrack = playlist[0];
+      if (!audio.src.endsWith(firstTrack)) {
+        audio.src = firstTrack;
+      }
+      audio.currentTime = 0;
+      audio.volume = getTrackVolume(0);
+    }
+  };
+
   useEffect(() => {
-    audioRef.current = new Audio(playlist[currentTrackIndex]);
-    audioRef.current.volume = 0.4;
-    
-    audioRef.current.onended = () => {
+    const audio = new Audio();
+    audio.preload = 'metadata';
+    audio.src = playlist[0];
+    audio.volume = getTrackVolume(0);
+    audio.onended = () => {
       setCurrentTrackIndex((prev) => (prev + 1) % playlist.length);
     };
+    audioRef.current = audio;
 
     return () => {
-      if (audioRef.current) {
-        audioRef.current.pause();
-        audioRef.current.src = '';
-      }
+      audio.onended = null;
+      audio.pause();
+      audio.src = '';
+      audioRef.current = null;
     };
-  }, [currentTrackIndex]);
+  }, []);
 
   useEffect(() => {
-    if (!audioRef.current) return;
+    const audio = audioRef.current;
+    if (!audio) return;
+    audio.volume = getTrackVolume(currentTrackIndex);
     if (musicActive) {
-      audioRef.current.src = playlist[currentTrackIndex];
-      audioRef.current.play().catch(err => console.log("Errore riproduzione musica:", err));
+      const targetSrc = playlist[currentTrackIndex];
+      if (!audio.src.endsWith(targetSrc)) {
+        audio.src = targetSrc;
+        audio.currentTime = 0;
+      }
+      audio.play().catch(err => console.log('Errore riproduzione musica:', err));
     } else {
-      audioRef.current.pause();
+      audio.pause();
     }
   }, [musicActive, currentTrackIndex]);
-
   const [_isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
     return Boolean(localStorage.getItem('sorare_auth_token') || localStorage.getItem('sorare_token'));
   });
@@ -2542,7 +2576,7 @@ export default function App() {
           window.history.pushState({ tab: event.state.tab }, '', window.location.pathname);
         }
       } else {
-        setActiveTab('HOME');
+    setActiveTab('HOME');
         window.history.pushState({ tab: 'HOME' }, '', window.location.pathname);
       }
     };
@@ -2553,9 +2587,11 @@ export default function App() {
   useEffect(() => {
     const savedToken = localStorage.getItem('sorare_token');
     const savedName = localStorage.getItem('sorare_account_name');
+    const savedAvatar = localStorage.getItem('sorare_account_avatar') || '';
     if (savedToken && savedName && !accountName) {
       setToken(savedToken);
       setAccountName(savedName);
+      if (savedAvatar) setAccountAvatarUrl(savedAvatar);
       setIsAuthenticated(true);
       if (cards.length === 0) {
         syncAllCardsInBackground(savedToken, true);
@@ -2580,6 +2616,7 @@ export default function App() {
 
       const authToken = data.token || data.access_token;
       const nickname = data.nickname || data.username || 'SorareUser';
+      const avatarUrl = data.avatarUrl || data.pictureUrl || '';
 
       if (authToken) {
         setToken(authToken);
@@ -2588,6 +2625,7 @@ export default function App() {
         setIsAuthenticated(true);
         setAccountName(nickname);
         localStorage.setItem('sorare_account_name', nickname);
+        if (avatarUrl) { setAccountAvatarUrl(avatarUrl); localStorage.setItem('sorare_account_avatar', avatarUrl); }
         setAuthError(null);
 
         await syncAllCardsInBackground(authToken, false);
@@ -2660,12 +2698,15 @@ export default function App() {
 
     setToken('');
     setAccountName('');
+    setAccountAvatarUrl('');
+    localStorage.removeItem('sorare_account_avatar');
     setIsAuthenticated(false);
     setAuthError(null);
     setCards([]);
     setNotifications([]);
     localStorage.clear();
     window.history.replaceState({}, document.title, window.location.pathname);
+    resetPlaylistToStart(true);
     setActiveTab('HOME');
   };
 
@@ -2736,14 +2777,6 @@ export default function App() {
       }
 
       localStorage.setItem('sorare_cards', JSON.stringify(accumulatedCards));
-      setNotifications((prev) => [
-        {
-          id: `sync-${Date.now()}`,
-          title: 'Sincronizzazione completata',
-          message: `${accumulatedCards.length} carte aggiornate con successo.`
-        },
-        ...prev
-      ]);
     } catch (err) {
       console.error('Errore durante il download:', err);
       if (!silent) {
@@ -2768,7 +2801,7 @@ export default function App() {
       <Sidebar 
         activeTab={activeTab} 
         setActiveTab={navigateToTab} 
-        accountName={accountName} 
+        accountName={accountName}
         onLogout={handleLogout} 
         audioActive={audioActive}
         onToggleAudio={handleToggleAudio}
@@ -2845,6 +2878,7 @@ export default function App() {
                 setActiveTab={navigateToTab} 
                 onOpenSync={() => {}} 
                 onManualSync={handleManualSync} 
+                accountAvatarUrl={accountAvatarUrl}
                 onLogout={handleLogout} 
                 accountName={accountName} 
                 isSyncing={isBackgroundSyncing} 
@@ -2880,28 +2914,60 @@ export default function App() {
                 
                 if (!matchesSearch) return false;
                 if (inSeasonOnly && !card.inSeason) return false;
-                if (hideListedCards && card.listingStatus === 'ACTIVE') return false;
-                if (onlyNotInLineup && card.isInLineup) return false;
+                if (hideListedCards && card.listingStatus !== 'ACTIVE') return false;
+                if (onlyNotInLineup && (card.isInLineup || card.isInOtherLineup || card.canPlayLineup === false)) return false;
 
                 return true;
               });
 
-              const sortedProCards = [...filteredProCards].sort((a: any, b: any) => {
-                if (clubSortBy === 'punteggio_max') {
-                  return (b.l5Average || 0) - (a.l5Average || 0);
-                } else if (clubSortBy === 'prezzo_max') {
-                  return (b.askingPrice || b.priceEur || 0) - (a.askingPrice || a.priceEur || 0);
-                } else if (clubSortBy === 'prezzo_min') {
-                  return (a.askingPrice || a.priceEur || 0) - (b.askingPrice || b.priceEur || 0);
-                } else if (clubSortBy === 'nome') {
-                  return (a.name || '').localeCompare(b.name || '');
-                } else if (clubSortBy === 'sealing') {
-                  const aSealed = a.sealed ? 1 : 0;
-                  const bSealed = b.sealed ? 1 : 0;
-                  return bSealed - aSealed;
+              const parseNum = (v: any) => { if (typeof v === 'number') return Number.isFinite(v) ? v : 0; const n = Number(String(v ?? '0').replace(',', '.').replace(/[^0-9.-]/g, '')); return Number.isFinite(n) ? n : 0; };
+              const getCardPrice = (c: any) => parseNum(c?.askingPrice ?? c?.priceEur ?? c?.minPrice ?? 0);
+              const getCardName = (c: any) => String(c?.name || c?.player?.displayName || '').trim();
+              const getSealScore = (c: any) => { if (typeof c?.sealed === 'number') return c.sealed; if (c?.sealed || c?.isSealed) return 1; return 0; };
+              const indexedCards = filteredProCards.map((card: any, idx: number) => ({ card, idx }));
+              const sortedProCards = [...indexedCards].sort((a: any, b: any) => {
+                const ca = a.card; const cb = b.card;
+                const byName = () => getCardName(ca).localeCompare(getCardName(cb), undefined, { sensitivity: 'base' });
+                const byIdx = () => a.idx - b.idx;
+                if (clubSortBy === 'novita') {
+                  return byIdx();
                 }
-                return 0;
-              });
+                if (clubSortBy === 'punteggio_max') {
+                  const sa = parseNum(ca.l10Average);
+                  const sb = parseNum(cb.l10Average);
+                  return sb !== sa ? sb - sa : byName();
+                }
+                if (clubSortBy === 'prezzo_max') {
+                  const pa = getCardPrice(ca);
+                  const pb = getCardPrice(cb);
+                  if (pb !== pa) return pb - pa;
+                  const sa = parseNum(ca.l10Average);
+                  const sb = parseNum(cb.l10Average);
+                  return sb !== sa ? sb - sa : byName();
+                }
+                if (clubSortBy === 'prezzo_min') {
+                  const pa = getCardPrice(ca);
+                  const pb = getCardPrice(cb);
+                  const aHas = pa > 0 ? 0 : 1; const bHas = pb > 0 ? 0 : 1;
+                  if (aHas !== bHas) return aHas - bHas;
+                  if (pa !== pb) return pa - pb;
+                  const sa = parseNum(ca.l10Average);
+                  const sb = parseNum(cb.l10Average);
+                  return sa !== sb ? sa - sb : byName();
+                }
+                if (clubSortBy === 'nome') {
+                  const cmp = byName();
+                  return cmp !== 0 ? cmp : parseNum(cb.l10Average) - parseNum(ca.l10Average);
+                }
+                if (clubSortBy === 'sealing') {
+                  const sa = getSealScore(ca);
+                  const sb = getSealScore(cb);
+                  if (sb !== sa) return sb - sa;
+                  const l10Cmp = parseNum(cb.l10Average) - parseNum(ca.l10Average);
+                  return l10Cmp !== 0 ? l10Cmp : byName();
+                }
+                return byIdx();
+              }).map((x: any) => x.card);
 
               return (
                 <div className="space-y-6 max-w-7xl mx-auto w-full">
@@ -2959,7 +3025,7 @@ export default function App() {
                             className="bg-[#0e0e12] text-white text-xs font-bold border border-[#282834] rounded-lg px-3 py-1.5 focus:outline-none focus:border-amber-500 transition-colors cursor-pointer"
                           >
                             <option value="novita">Novità</option>
-                            <option value="punteggio_max">Punteggio Medio Massimo (L5/L10)</option>
+                            <option value="punteggio_max">Punteggio Medio Massimo (L10)</option>
                             <option value="prezzo_max">Prezzo Massimo</option>
                             <option value="prezzo_min">Prezzo Minimo</option>
                             <option value="nome">Nome Giocatore (A-Z)</option>
@@ -3002,7 +3068,7 @@ export default function App() {
                               : 'bg-[#0e0e12] text-zinc-300 border-[#282834] hover:border-zinc-500'
                           }`}
                         >
-                          {hideListedCards ? '🏷️ Escludi In Vendita' : translations[currentLang]?.showOnSale || '🏷️ Mostra In Vendita'}
+                          {hideListedCards ? '🏷️ Solo In Vendita (Attivo)' : translations[currentLang]?.showOnSale || '🏷️ Mostra In Vendita'}
                         </button>
 
                         <button
@@ -3189,8 +3255,8 @@ export default function App() {
                 musicActive={musicActive}
                 onToggleMusic={handleToggleMusic}
                 cards={cards} 
-                accountName={accountName} 
-                onLogout={handleLogout} 
+                accountName={accountName}
+        onLogout={handleLogout} 
                 notifications={notifications}
                 onClearNotifications={handleClearNotifications}
                 currentLang={currentLang}

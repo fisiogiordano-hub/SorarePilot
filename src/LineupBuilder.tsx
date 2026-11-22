@@ -1,6 +1,21 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { translations } from './translations';
 import type { Lang } from './translations';
+
+export interface CardCompetitionRef {
+  slug?: string;
+  name?: string;
+  displayName?: string;
+}
+
+export interface OfficialGameWeekInfo {
+  gameWeek: number | null;
+  slug?: string | null;
+  startDate: string;
+  endDate: string;
+  cutOffDate?: string;
+  state?: string;
+}
 
 export interface Card {
   id: string;
@@ -12,6 +27,10 @@ export interface Card {
   position?: string;
   team?: string;
   competition?: string;
+  competitionSlug?: string;
+  leagueSlug?: string;
+  activeCompetitions?: CardCompetitionRef[];
+  u23Eligible?: boolean;
   league?: string;
   age?: number;
   birthDate?: string;
@@ -48,12 +67,15 @@ export interface Card {
     age?: number;
     birthDate?: string;
     dateOfBirth?: string;
+    u23Eligible?: boolean;
     activeClub?: {
+      slug?: string;
       name: string;
       pictureUrl: string;
       league?: string;
       competition?: string;
       country?: string;
+      activeCompetitions?: CardCompetitionRef[];
     };
   };
   so5Scores?: { score: number }[];
@@ -62,6 +84,8 @@ export interface Card {
 interface LineupBuilderProps {
   cards: Card[];
   currentLang?: Lang;
+  liveGameWeek?: OfficialGameWeekInfo | null;
+  upcomingGameWeek?: OfficialGameWeekInfo | null;
 }
 
 interface ArenaRoom {
@@ -70,6 +94,7 @@ interface ArenaRoom {
   cap: number;
   rarity: string;
   entryFee?: number;
+  competitionSlugs?: string[];
   leagueAliases?: string[];
   u23Only?: boolean;
 }
@@ -92,6 +117,7 @@ const ARENA_ROOMS: ArenaRoom[] = [
     cap: 260,
     rarity: 'LIMITED',
     entryFee: 300,
+    competitionSlugs: ['premier-league'],
     leagueAliases: ['premier league', 'epl', 'english premier league']
   },
   {
@@ -100,7 +126,8 @@ const ARENA_ROOMS: ArenaRoom[] = [
     cap: 260,
     rarity: 'LIMITED',
     entryFee: 300,
-    leagueAliases: ['laliga', 'la liga', 'primera division', 'spain']
+    competitionSlugs: ['laliga-ea-sports', 'la-liga', 'primera-division'],
+    leagueAliases: ['laliga', 'la liga', 'primera division']
   },
   {
     id: 'bundesliga-arena',
@@ -108,7 +135,8 @@ const ARENA_ROOMS: ArenaRoom[] = [
     cap: 260,
     rarity: 'LIMITED',
     entryFee: 300,
-    leagueAliases: ['bundesliga', '1. bundesliga', 'germany']
+    competitionSlugs: ['bundesliga'],
+    leagueAliases: ['bundesliga', '1. bundesliga']
   },
   {
     id: 'serie-a-arena',
@@ -116,7 +144,8 @@ const ARENA_ROOMS: ArenaRoom[] = [
     cap: 260,
     rarity: 'LIMITED',
     entryFee: 300,
-    leagueAliases: ['serie a', 'lega serie a', 'italy']
+    competitionSlugs: ['serie-a'],
+    leagueAliases: ['serie a', 'lega serie a']
   },
   {
     id: 'ligue-1-arena',
@@ -124,7 +153,8 @@ const ARENA_ROOMS: ArenaRoom[] = [
     cap: 260,
     rarity: 'LIMITED',
     entryFee: 300,
-    leagueAliases: ['ligue 1', 'ligue 1 mcdonald', 'france']
+    competitionSlugs: ['ligue-1-mcdonalds', 'ligue-1'],
+    leagueAliases: ['ligue 1', 'ligue 1 mcdonald']
   },
   {
     id: 'mls-arena',
@@ -132,6 +162,7 @@ const ARENA_ROOMS: ArenaRoom[] = [
     cap: 260,
     rarity: 'LIMITED',
     entryFee: 300,
+    competitionSlugs: ['major-league-soccer', 'mls'],
     leagueAliases: ['mls', 'major league soccer']
   },
   {
@@ -140,7 +171,8 @@ const ARENA_ROOMS: ArenaRoom[] = [
     cap: 260,
     rarity: 'LIMITED',
     entryFee: 300,
-    leagueAliases: ['eredivisie', 'netherlands']
+    competitionSlugs: ['eredivisie'],
+    leagueAliases: ['eredivisie']
   },
   {
     id: 'jupiler-pro-league-arena',
@@ -148,7 +180,8 @@ const ARENA_ROOMS: ArenaRoom[] = [
     cap: 260,
     rarity: 'LIMITED',
     entryFee: 300,
-    leagueAliases: ['jupiler pro league', 'belgian pro league', 'belgium']
+    competitionSlugs: ['jupiler-pro-league'],
+    leagueAliases: ['jupiler pro league', 'belgian pro league']
   },
   {
     id: 'j-league-arena',
@@ -156,7 +189,8 @@ const ARENA_ROOMS: ArenaRoom[] = [
     cap: 260,
     rarity: 'LIMITED',
     entryFee: 300,
-    leagueAliases: ['j. league', 'j league', 'j1 league', 'japan']
+    competitionSlugs: ['j1-league', 'j-league'],
+    leagueAliases: ['j. league', 'j league', 'j1 league']
   },
   {
     id: 'k-league-arena',
@@ -164,7 +198,8 @@ const ARENA_ROOMS: ArenaRoom[] = [
     cap: 260,
     rarity: 'LIMITED',
     entryFee: 300,
-    leagueAliases: ['k league', 'k league 1', 'korea', 'south korea']
+    competitionSlugs: ['k-league-1', 'k-league'],
+    leagueAliases: ['k league', 'k league 1']
   },
   {
     id: 'super-lig-arena',
@@ -172,7 +207,8 @@ const ARENA_ROOMS: ArenaRoom[] = [
     cap: 260,
     rarity: 'LIMITED',
     entryFee: 300,
-    leagueAliases: ['super lig', 'süper lig', 'turkey', 'turkiye']
+    competitionSlugs: ['super-lig'],
+    leagueAliases: ['super lig', 'süper lig']
   },
   {
     id: 'liga-portugal-arena',
@@ -180,7 +216,8 @@ const ARENA_ROOMS: ArenaRoom[] = [
     cap: 260,
     rarity: 'LIMITED',
     entryFee: 300,
-    leagueAliases: ['liga portugal', 'primeira liga', 'portugal']
+    competitionSlugs: ['liga-portugal', 'primeira-liga'],
+    leagueAliases: ['liga portugal', 'primeira liga']
   },
   {
     id: 'u23-arena',
@@ -191,6 +228,15 @@ const ARENA_ROOMS: ArenaRoom[] = [
     u23Only: true
   },
 ];
+
+function normalizeText(value: unknown): string {
+  return String(value || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
 
 function isCardBlockedForLineup(card: Card): boolean {
   if (card.canPlayLineup === false) return true;
@@ -230,10 +276,15 @@ function isCardBlockedForLineup(card: Card): boolean {
 
 function hasGameInNextGameWeek(card: Card): boolean {
   if (card.hasUpcomingGame === false) return false;
-  if (!card.nextGameDate) return false;
-  const gameMs = Date.parse(card.nextGameDate);
-  if (!Number.isFinite(gameMs)) return false;
-  return gameMs > Date.now();
+
+  if (card.nextGameDate) {
+    const gameMs = Date.parse(card.nextGameDate);
+    if (Number.isFinite(gameMs)) {
+      return gameMs > Date.now();
+    }
+  }
+
+  return Boolean(card.hasUpcomingGame === true || card.opponent || card.gameWeek);
 }
 
 function getPlayerAge(card: Card): number | null {
@@ -260,13 +311,40 @@ function getPlayerAge(card: Card): number | null {
 
 function matchesRoomCompetitionOrAge(card: Card, room: ArenaRoom): boolean {
   if (room.u23Only) {
+    const officialU23 = card.player?.u23Eligible ?? card.u23Eligible;
+    if (typeof officialU23 === 'boolean') {
+      return officialU23;
+    }
     const age = getPlayerAge(card);
     if (age === null || age > 23) return false;
     return true;
   }
 
-  if (!room.leagueAliases || room.leagueAliases.length === 0) {
+  const hasSlugFilter = Array.isArray(room.competitionSlugs) && room.competitionSlugs.length > 0;
+  const hasAliasFilter = Array.isArray(room.leagueAliases) && room.leagueAliases.length > 0;
+
+  if (!hasSlugFilter && !hasAliasFilter) {
     return true;
+  }
+
+  const clubComps = [
+    ...(Array.isArray(card.activeCompetitions) ? card.activeCompetitions : []),
+    ...(Array.isArray(card.player?.activeClub?.activeCompetitions) ? card.player.activeClub.activeCompetitions : [])
+  ];
+
+  const cardSlugs = [
+    card.competitionSlug,
+    card.leagueSlug,
+    ...clubComps.map(c => c?.slug)
+  ]
+    .map(normalizeText)
+    .filter(Boolean);
+
+  if (hasSlugFilter && cardSlugs.length > 0) {
+    const normalizedSlugs = room.competitionSlugs!.map(normalizeText);
+    if (cardSlugs.some(slug => normalizedSlugs.includes(slug))) {
+      return true;
+    }
   }
 
   const sources = [
@@ -274,19 +352,20 @@ function matchesRoomCompetitionOrAge(card: Card, room: ArenaRoom): boolean {
     card.league,
     card.player?.activeClub?.competition,
     card.player?.activeClub?.league,
-    card.player?.activeClub?.country,
-    card.team,
-    card.player?.activeClub?.name,
-    card.opponent
+    ...clubComps.flatMap(c => [c?.displayName, c?.name, c?.slug])
   ]
-    .filter(Boolean)
-    .map(v => String(v).toLowerCase().trim());
+    .map(normalizeText)
+    .filter(Boolean);
 
   if (sources.length === 0) return false;
 
-  return sources.some(src =>
-    room.leagueAliases!.some(alias => src.includes(alias.toLowerCase()))
-  );
+  if (hasAliasFilter) {
+    return sources.some(src =>
+      room.leagueAliases!.some(alias => src.includes(normalizeText(alias)))
+    );
+  }
+
+  return false;
 }
 
 function getPlayerKey(card: Card): string {
@@ -303,10 +382,59 @@ function getPlayerKey(card: Card): string {
   return String(card.id).trim().toLowerCase();
 }
 
-export default function LineupBuilder({ cards, currentLang = 'IT' }: LineupBuilderProps) {
+export default function LineupBuilder({
+  cards,
+  currentLang = 'IT',
+  liveGameWeek,
+  upcomingGameWeek
+}: LineupBuilderProps) {
   const t = (key: string) => translations[currentLang]?.[key] || translations['IT']?.[key] || key;
 
   const [selectedRoom, setSelectedRoom] = useState<ArenaRoom>(ARENA_ROOMS[0]);
+
+  const [gwState, setGwState] = useState<{
+    liveGameWeek: OfficialGameWeekInfo | null;
+    upcomingGameWeek: OfficialGameWeekInfo | null;
+  }>({
+    liveGameWeek: liveGameWeek ?? null,
+    upcomingGameWeek: upcomingGameWeek ?? null
+  });
+
+  useEffect(() => {
+    if (liveGameWeek !== undefined || upcomingGameWeek !== undefined) {
+      setGwState({
+        liveGameWeek: liveGameWeek ?? null,
+        upcomingGameWeek: upcomingGameWeek ?? null
+      });
+    }
+  }, [liveGameWeek, upcomingGameWeek]);
+
+  useEffect(() => {
+    let active = true;
+
+    const syncGameWeek = async () => {
+      try {
+        const res = await fetch('/api/gameweek');
+        if (!res.ok) return;
+        const data = await res.json();
+        if (!active) return;
+        setGwState({
+          liveGameWeek: data.liveGameWeek ?? null,
+          upcomingGameWeek: data.upcomingGameWeek ?? null
+        });
+      } catch {
+        // Mantiene l'ultimo valore noto in caso di errore temporaneo
+      }
+    };
+
+    syncGameWeek();
+    const intervalId = setInterval(syncGameWeek, 60000);
+
+    return () => {
+      active = false;
+      clearInterval(intervalId);
+    };
+  }, []);
 
   const [gk, setGk] = useState<Card | null>(null);
   const [def, setDef] = useState<Card | null>(null);
@@ -383,7 +511,18 @@ export default function LineupBuilder({ cards, currentLang = 'IT' }: LineupBuild
 
     const uniquePlayersCount = new Set(availableCards.map(getPlayerKey)).size;
     if (!gks.length || !defs.length || !mids.length || !fwds.length || uniquePlayersCount < 5) {
-      alert(
+      console.log('DEBUG LINEUP:', {
+        room: selectedRoom.id,
+        totaleCarte: cards.length,
+        limited: cards.filter(c => (c.rarity || '').toUpperCase() === 'LIMITED').length,
+        nonBloccate: cards.filter(c => !isCardBlockedForLineup(c)).length,
+        conPartita: cards.filter(c => hasGameInNextGameWeek(c)).length,
+        availableCards: availableCards.length,
+        ruoli: { gk: gks.length, def: defs.length, mid: mids.length, fwd: fwds.length },
+        esempioCarta: cards[0]
+      });
+
+      setSuggestNotice(
         `Non hai abbastanza giocatori distinti ${selectedRoom.rarity} idonei per "${selectedRoom.name}" (con partita nella prossima GW, competizione/età valida e liberi) per comporre 5 giocatori diversi.`
       );
       return;
@@ -508,7 +647,9 @@ export default function LineupBuilder({ cards, currentLang = 'IT' }: LineupBuild
         `Nessuna combinazione idonea per "${selectedRoom.name}" nella prossima GW entra nel Cap ${selectedRoom.cap}: inserita la combinazione a somma L10 più bassa (${lowestSum}).`
       );
     } else {
-      alert(`Impossibile trovare 5 giocatori distinti per la prossima GW entro il Cap L10 di ${selectedRoom.cap}.`);
+      setSuggestNotice(
+        `Impossibile trovare 5 giocatori distinti per la prossima GW entro il Cap L10 di ${selectedRoom.cap}.`
+      );
     }
   };
 
@@ -522,11 +663,41 @@ export default function LineupBuilder({ cards, currentLang = 'IT' }: LineupBuild
     setSuggestNotice(null);
   };
 
+  const captainTooltipText =
+    t('captainTooltip') !== 'captainTooltip'
+      ? t('captainTooltip')
+      : 'Capitano calcolato su L10 x % Titolarità (modificabile con 1 click)';
+
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-6 text-white">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 bg-gray-900 p-6 rounded-xl border border-gray-800">
         <div>
           <h1 className="text-2xl font-bold text-[#ffea00]">Suggeritore Arena Rooms</h1>
+
+          <div className="flex flex-wrap items-center gap-2 mt-2">
+            {gwState.liveGameWeek ? (
+              <span className="inline-flex items-center gap-1.5 bg-emerald-500/15 border border-emerald-500/40 text-emerald-300 text-xs font-bold px-3 py-1 rounded-full">
+                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                LIVE: {gwState.liveGameWeek.gameWeek ? `GW #${gwState.liveGameWeek.gameWeek}` : 'Game Week in corso'}
+                <span className="text-emerald-400/80 font-normal">
+                  ({new Date(gwState.liveGameWeek.startDate).toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit' })} - {new Date(gwState.liveGameWeek.endDate).toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit' })})
+                </span>
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-1.5 bg-gray-800 border border-gray-700 text-gray-300 text-xs font-semibold px-3 py-1 rounded-full">
+                Nessuna GW Live al momento
+              </span>
+            )}
+
+            {gwState.upcomingGameWeek && (
+              <span className="inline-flex items-center gap-1.5 bg-[#ffea00]/10 border border-[#ffea00]/30 text-[#ffea00] text-xs font-bold px-3 py-1 rounded-full">
+                Schieramento: {gwState.upcomingGameWeek.gameWeek ? `GW #${gwState.upcomingGameWeek.gameWeek}` : 'Prossima GW'}
+                <span className="text-[#ffea00]/80 font-normal">
+                  (start {new Date(gwState.upcomingGameWeek.startDate).toLocaleString('it-IT', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })})
+                </span>
+              </span>
+            )}
+          </div>
         </div>
 
         <div className="flex items-center gap-3">
@@ -568,7 +739,7 @@ export default function LineupBuilder({ cards, currentLang = 'IT' }: LineupBuild
         <div className="flex justify-between items-center mb-6">
           <div>
             <h2 className="text-lg font-bold text-gray-200">{t('startingQuintet') || 'Quintetto Titolare'}</h2>
-            <p className="text-xs text-gray-400 mt-0.5">{t('captainTooltip') || 'Capitano calcolato su L10 x % Titolaria (modificabile con 1 click)'}</p>
+            <p className="text-xs text-gray-400 mt-0.5">{captainTooltipText}</p>
           </div>
           <button onClick={handleClearLineup} className="text-xs text-gray-400 hover:text-red-400 underline cursor-pointer">
             {t('clearAll') || 'Svuota Slot'}

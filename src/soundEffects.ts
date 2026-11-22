@@ -50,7 +50,7 @@ class SoundManager {
 
       // Fade-in iniziale impercettibile (0.001) per evitare il "pop" forte sul primo suono
       gain.gain.setValueAtTime(0.0001, ctx.currentTime);
-      gain.gain.linearRampToValueAtTime(0.02, ctx.currentTime + 0.005);
+      gain.gain.linearRampToValueAtTime(0.14, ctx.currentTime + 0.005);
       gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.04);
 
       osc.connect(gain);
@@ -75,7 +75,7 @@ class SoundManager {
 
       // Fade-in iniziale protettivo anche per il click
       gain.gain.setValueAtTime(0.0001, ctx.currentTime);
-      gain.gain.linearRampToValueAtTime(0.06, ctx.currentTime + 0.005);
+      gain.gain.linearRampToValueAtTime(0.28, ctx.currentTime + 0.005);
       gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.05);
 
       osc.connect(gain);

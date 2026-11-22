@@ -1,0 +1,11 @@
+- git status
+
+- npm run build
+
+- git add server.cjs
+
+- git commit -m "Ottimizza server.cjs per cache e concorrenza"
+
+- git push origin main
+
+- manial deploy su render
