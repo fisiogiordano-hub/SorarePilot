@@ -36,6 +36,7 @@ import {
 import LineupBuilder from './LineupBuilder';
 import { sounds } from './soundEffects';
 import { translations } from './translations';
+import './vg-transitions.css';
 
 export interface SorareCard {
   id: string;
@@ -424,16 +425,14 @@ export const SettingModule: React.FC<SettingModuleProps> = ({
     downloadAnchor.remove();
   };
 
-  const handleDeleteAccount = () => {
-    const confirmation = window.confirm(
-      t('deleteAccountConfirm') || "ATTENZIONE: Stai per eliminare il tuo account e tutti i dati salvati su SorarePilot in conformità con il GDPR. Questa azione è irreversibile. Vuoi procedere?"
-    );
-    if (confirmation) {
-      localStorage.clear();
-      alert(t('accountDeletedSuccess') || "Account e dati eliminati con successo.");
-      onLogout();
-    }
-  };
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [deleteConfirmWord, setDeleteConfirmWord] = useState('');
+  const [deleteError, setDeleteError] = useState('');
+  const openDeleteModal = () => { setDeleteConfirmWord(''); setDeleteError(''); setDeleteModalOpen(true); };
+  const closeDeleteModal = () => { setDeleteModalOpen(false); setDeleteConfirmWord(''); setDeleteError(''); };
+  const canConfirmDelete = deleteConfirmWord.trim().toUpperCase() === 'ELIMINA';
+  const handleDeleteAccount = () => openDeleteModal();
+  const handleConfirmDeleteAccount = (e: React.FormEvent) => { e.preventDefault(); if (!canConfirmDelete) return setDeleteError('Digita ELIMINA per confermare.'); localStorage.clear(); closeDeleteModal(); alert(t('accountDeletedSuccess') || 'Dati locali e sessione eliminati con successo.'); onLogout(); };
 
   return (
     <div className="space-y-6 max-w-4xl mx-auto w-full">
@@ -621,6 +620,7 @@ export const SettingModule: React.FC<SettingModuleProps> = ({
           <Trash2 className="h-4 w-4" />
           <span>{t('deleteAccountButton') || 'Elimina Account'}</span>
         </button>
+      {deleteModalOpen && (<div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4"><form onSubmit={handleConfirmDeleteAccount} className="bg-[#16161a] border border-red-500/40 rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl"><h3 className="text-lg font-black text-red-400 uppercase">Conferma Eliminazione</h3><p className="text-xs text-zinc-300">Verranno eliminati solo i <strong>dati locali e la sessione dell'app</strong> per <strong>{accountName || 'questo account'}</strong> (non tocca il tuo account Sorare).</p><input type="text" value={deleteConfirmWord} onChange={(e) => { setDeleteConfirmWord(e.target.value); setDeleteError(''); }} placeholder="Digita ELIMINA" className="w-full bg-[#101014] border border-[#2c2c38] rounded-xl px-3.5 py-2.5 text-sm font-bold text-white uppercase outline-none" />{deleteError && <div className="bg-red-500/10 border border-red-500/30 text-red-300 text-xs font-bold px-3.5 py-2.5 rounded-xl">{deleteError}</div>}<div className="flex justify-end space-x-3 pt-2"><button type="button" onClick={closeDeleteModal} className="px-4 py-2.5 rounded-xl text-xs font-bold text-zinc-300 bg-[#22222b] cursor-pointer">Annulla</button><button type="submit" disabled={!canConfirmDelete} className="px-5 py-2.5 rounded-xl text-xs font-black uppercase text-white bg-red-600 disabled:opacity-40 cursor-pointer">Elimina</button></div></form></div>)}
       </div>
     </div>
   );
@@ -1444,7 +1444,8 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, accountName,
         )}
 
         {/* 4 TASTI DELLA HOME (VISIBILI SOLO IN HOME) */}
-        {activeTab === 'HOME' && (
+            
+            {activeTab === 'HOME' && (
           <nav className="space-y-1.5 pt-1">
             <button
               type="button"
@@ -2004,11 +2005,13 @@ setSubmitStatus(`Error: ${err.message}`);
                         );
                       })}
                     </div>
+                  
                   </div>
                 );
               })
             )}
-          </div>
+          
+            </div>
         </>
       )}
 
@@ -2465,13 +2468,11 @@ export default function App() {
     '/audio/6.mp3'
   ];
 
-  // Moltiplicatori per singola traccia (1.0 = neutro; <1.0 riduce, >1.0 alza fino a 1.0)
-  const trackVolumeMultipliers: number[] = [1.0, 1.0, 1.0, 1.0, 1.0, 1.0];
-  const baseMusicVolume = 0.15;
+  const CONSTANT_MUSIC_VOLUME = 0.15;
 
-  const getTrackVolume = (index: number) => {
-    const mult = trackVolumeMultipliers[index] ?? 1.0;
-    return Math.min(1, Math.max(0, baseMusicVolume * mult));
+  const applyConstantVolume = (audio: HTMLAudioElement | null) => {
+    if (!audio) return;
+    audio.volume = CONSTANT_MUSIC_VOLUME;
   };
 
   const resetPlaylistToStart = (shouldPause = true) => {
@@ -2486,21 +2487,33 @@ export default function App() {
         audio.src = firstTrack;
       }
       audio.currentTime = 0;
-      audio.volume = getTrackVolume(0);
+      applyConstantVolume(audio);
     }
   };
 
   useEffect(() => {
+    const startIndex = playlist.length > 0 ? Math.floor(Math.random() * playlist.length) : 0;
+    setCurrentTrackIndex(startIndex);
     const audio = new Audio();
     audio.preload = 'metadata';
-    audio.src = playlist[0];
-    audio.volume = getTrackVolume(0);
+    audio.src = playlist[startIndex] ?? playlist[0];
+    applyConstantVolume(audio);
+    const handleVolumeLock = () => applyConstantVolume(audio);
+    audio.addEventListener('loadedmetadata', handleVolumeLock);
+    audio.addEventListener('play', handleVolumeLock);
     audio.onended = () => {
-      setCurrentTrackIndex((prev) => (prev + 1) % playlist.length);
+      setCurrentTrackIndex((prev) => {
+        if (playlist.length <= 1) return 0;
+        let next = Math.floor(Math.random() * playlist.length);
+        if (next === prev) next = (prev + 1) % playlist.length;
+        return next;
+      });
     };
     audioRef.current = audio;
 
     return () => {
+      audio.removeEventListener('loadedmetadata', handleVolumeLock);
+      audio.removeEventListener('play', handleVolumeLock);
       audio.onended = null;
       audio.pause();
       audio.src = '';
@@ -2511,13 +2524,14 @@ export default function App() {
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
-    audio.volume = getTrackVolume(currentTrackIndex);
+    applyConstantVolume(audio);
     if (musicActive) {
       const targetSrc = playlist[currentTrackIndex];
       if (!audio.src.endsWith(targetSrc)) {
         audio.src = targetSrc;
         audio.currentTime = 0;
       }
+      applyConstantVolume(audio);
       audio.play().catch(err => console.log('Errore riproduzione musica:', err));
     } else {
       audio.pause();
@@ -2808,7 +2822,7 @@ export default function App() {
         currentLang={currentLang}
       />
 
-      <main className="flex-1 px-8 pt-8 pb-12 h-screen overflow-y-auto custom-scrollbar max-w-7xl mx-auto flex flex-col">
+      <main className={`flex-1 min-w-0 px-8 pt-8 h-screen max-w-7xl mx-auto block ${activeTab === 'HOME' ? 'overflow-hidden pb-8' : 'overflow-y-auto custom-scrollbar pb-16'}`}>
         {errorMessage && (
           <div className="bg-red-500/10 border border-red-500/30 text-red-400 p-4 rounded-xl flex items-center justify-between text-xs font-bold mb-4 shrink-0">
             <span>{errorMessage}</span>
@@ -2873,6 +2887,7 @@ export default function App() {
           </div>
         ) : (
           <>
+            <div key={activeTab} className="vg-screen-enter vg-scan-wipe min-h-0 w-full">
             {activeTab === 'HOME' && (
               <HomeModule 
                 setActiveTab={navigateToTab} 
@@ -3263,7 +3278,8 @@ export default function App() {
                 onLanguageChange={handleLanguageChange}
               />
             )}
-          </>
+          </div>
+</>
         )}
       </main>
     </div>

@@ -988,8 +988,14 @@ const CARDS_QUERY_FULL = `
                   }
                 }
               }
-              so5Scores(last: 10) {
+              l5: averageScore(type: LAST_FIVE_PLAYED)
+              l10: averageScore(type: LAST_TEN_PLAYED)
+              so5Scores(last: 20) {
                 score
+                status
+                game {
+                  date
+                }
               }
             }
           }
@@ -1053,7 +1059,7 @@ const CARDS_QUERY_WITH_GAMES = `
                   }
                 }
               }
-              so5Scores(last: 10) {
+              so5Scores(last: 20) {
                 score
               }
             }
@@ -1099,7 +1105,7 @@ const CARDS_QUERY_FALLBACK = `
                 name
                 pictureUrl
               }
-              so5Scores(last: 10) {
+              so5Scores(last: 20) {
                 score
               }
             }
@@ -1133,11 +1139,11 @@ async function fetchUserCardsGraphQL(token, afterCursor) {
     if (preferredCardsQueryMode === 'full') {
       try {
         data = await runQuery(CARDS_QUERY_FULL);
-      } catch {
+      } catch (err) { console.error('[SorarePilot] CARDS_QUERY_FULL fallita:', err?.message || err);
         preferredCardsQueryMode = 'games';
         try {
           data = await runQuery(CARDS_QUERY_WITH_GAMES);
-        } catch {
+        } catch (err2) { console.error('[SorarePilot] CARDS_QUERY_WITH_GAMES fallita:', err2?.message || err2);
           preferredCardsQueryMode = 'fallback';
           data = await runQuery(CARDS_QUERY_FALLBACK);
         }
@@ -1145,7 +1151,7 @@ async function fetchUserCardsGraphQL(token, afterCursor) {
     } else if (preferredCardsQueryMode === 'games') {
       try {
         data = await runQuery(CARDS_QUERY_WITH_GAMES);
-      } catch {
+      } catch (err2) { console.error('[SorarePilot] CARDS_QUERY_WITH_GAMES fallita:', err2?.message || err2);
         preferredCardsQueryMode = 'fallback';
         data = await runQuery(CARDS_QUERY_FALLBACK);
       }
@@ -1373,20 +1379,24 @@ app.post('/api/user-cards', async (req, res) => {
           listingStatus = 'RETURNED';
         }
 
-        const scoresArray = card.player?.so5Scores || [];
-        const validScores = scoresArray
-          .map(s => (typeof s === 'object' && s !== null ? s.score : s))
-          .filter(s => typeof s === 'number' && !isNaN(s) && s !== null);
-
-        const last5 = validScores.slice(-5);
-        const l5Average = last5.length > 0
-          ? Math.round(last5.reduce((a, b) => a + b, 0) / last5.length)
-          : 0;
-
-        const last10 = validScores.slice(-10);
-        const l10Average = last10.length > 0
-          ? Math.round(last10.reduce((a, b) => a + b, 0) / last10.length)
-          : 0;
+        const rawScores = Array.isArray(card.player?.so5Scores) ? [...card.player.so5Scores] : [];
+        if (rawScores.some(s => s && typeof s === 'object' && s.game?.date)) {
+          rawScores.sort((x, y) => Date.parse(y?.game?.date || 0) - Date.parse(x?.game?.date || 0));
+        }
+        const playedScores = rawScores.filter(s => {
+          if (s === null || s === undefined) return false;
+          if (typeof s === 'object') {
+            if (s.status && String(s.status).toUpperCase().includes('DID_NOT_PLAY')) return false;
+            return typeof s.score === 'number' && !isNaN(s.score) && (s.status ? true : s.score > 0);
+          }
+          return typeof s === 'number' && !isNaN(s) && s > 0;
+        }).map(s => (typeof s === 'object' ? s.score : s));
+        const last5 = playedScores.slice(0, 5);
+        const fallbackL5 = last5.length > 0 ? Math.round(last5.reduce((x, y) => x + y, 0) / last5.length) : 0;
+        const last10 = playedScores.slice(0, 10);
+        const fallbackL10 = last10.length > 0 ? Math.round(last10.reduce((x, y) => x + y, 0) / last10.length) : 0;
+        const l5Average = typeof card.player?.l5 === 'number' && !isNaN(card.player.l5) ? Math.round(card.player.l5) : fallbackL5;
+        const l10Average = typeof card.player?.l10 === 'number' && !isNaN(card.player.l10) ? Math.round(card.player.l10) : fallbackL10;
 
         const gameInfo = extractNextGameWeekInfo(card.player?.activeClub, nextGwWindow);
         const officialU23 =
