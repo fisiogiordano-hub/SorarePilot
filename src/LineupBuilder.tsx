@@ -1,3 +1,4 @@
+import { playInsertCoinReady, formatInsertCoinReady } from './retroCue';
 import { useState, useMemo, useEffect } from 'react';
 import { translations } from './translations';
 import type { Lang } from './translations';
@@ -444,6 +445,7 @@ export default function LineupBuilder({
 
   const [manualCaptainId, setManualCaptainId] = useState<string | null>(null);
   const [suggestNotice, setSuggestNotice] = useState<string | null>(null);
+  const [lineupReadyNotice, setLineupReadyNotice] = useState<string | null>(null);
 
   const getL10 = (card: Card): number => {
     if (typeof card.l10Average === 'number' && card.l10Average > 0) return card.l10Average;
@@ -653,6 +655,12 @@ export default function LineupBuilder({
     }
   };
 
+  const handleSendLineupToApp = () => {
+    const slots = [gk, def, mid, fwd, extra].filter(Boolean);
+    if (slots.length === 0) { setLineupReadyNotice('Seleziona almeno una carta prima di inviare la formazione.'); return; }
+    playInsertCoinReady(true);
+    setLineupReadyNotice(formatInsertCoinReady('Formazione (' + slots.length + '/5 carte) inviata sull\x27app'));
+  };
   const handleClearLineup = () => {
     setGk(null);
     setDef(null);
@@ -729,7 +737,7 @@ export default function LineupBuilder({
         </div>
       </div>
 
-      {suggestNotice && (
+      {lineupReadyNotice && (<div className='bg-emerald-500/10 border border-emerald-500/40 text-emerald-300 text-xs font-bold p-4 rounded-xl'>{lineupReadyNotice}</div>)}{lineupReadyNotice && (<div className='bg-emerald-500/10 border border-emerald-500/40 text-emerald-300 text-xs font-bold p-4 rounded-xl'>{lineupReadyNotice}</div>)}{suggestNotice && (
         <div className="bg-amber-500/10 border border-amber-500/40 text-amber-300 text-xs font-bold p-4 rounded-xl">
           ⚠️ {suggestNotice}
         </div>
@@ -741,9 +749,8 @@ export default function LineupBuilder({
             <h2 className="text-lg font-bold text-gray-200">{t('startingQuintet') || 'Quintetto Titolare'}</h2>
             <p className="text-xs text-gray-400 mt-0.5">{captainTooltipText}</p>
           </div>
-          <button onClick={handleClearLineup} className="text-xs text-gray-400 hover:text-red-400 underline cursor-pointer">
-            {t('clearAll') || 'Svuota Slot'}
-          </button>
+          <div className='flex items-center gap-3'><button type='button' onClick={handleSendLineupToApp} className='bg-emerald-500 hover:bg-emerald-400 text-gray-950 text-xs font-black px-3.5 py-2 rounded-lg transition-colors cursor-pointer'>Invia Formazione</button><button type='button' onClick={handleClearLineup} className="text-xs text-gray-400 hover:text-red-400 underline cursor-pointer">
+            {t('clearAll') || 'Svuota Slot'}</button></div>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4">
