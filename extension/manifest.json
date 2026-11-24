@@ -1,0 +1,37 @@
+{
+  "manifest_version": 3,
+  "name": "SorarePilot Companion",
+  "version": "0.1.0",
+  "description": "Companion MV3 per missioni giornaliere, formazioni e vendite Sorare.",
+  "permissions": [
+    "storage",
+    "tabs"
+  ],
+  "host_permissions": [
+    "http://localhost:*/*",
+    "http://127.0.0.1:*/*",
+    "https://*.sorare.com/*",
+    "https://sorarepilot.onrender.com/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "http://localhost:*/*",
+        "http://127.0.0.1:*/*",
+        "https://sorarepilot.onrender.com/*"
+      ],
+      "js": [
+        "bridge-types.js",
+        "content-bridge.js"
+      ],
+      "run_at": "document_idle"
+    }
+  ],
+  "action": {
+    "default_popup": "popup/popup.html",
+    "default_title": "SorarePilot Companion"
+  }
+}

@@ -1,3 +1,4 @@
+import { playInsertCoinReady, formatInsertCoinReady } from './retroCue';
 import React, { useState, useEffect, useRef } from 'react';
 import { 
   Users, 
@@ -34,6 +35,8 @@ import {
 } from 'lucide-react';
 
 import LineupBuilder from './LineupBuilder';
+import ExtensionBar from './ExtensionBar';
+import { startLineupsFlow, startMissionsFlow, startSalesFlow } from './extension-client';
 import { sounds } from './soundEffects';
 import { translations } from './translations';
 import './vg-transitions.css';
@@ -240,7 +243,7 @@ export const AssistenzaModule: React.FC<{
         {supportLinks.map((item, index) => (
           <a
             key={index}
-            href={`https://${item.url.replace(/^https?:\/\//, '')}`}
+            href={`https://${item.url.replace(/https?:\/\//, '')}`}
             target="_blank"
             rel="noopener noreferrer"
             className="bg-[#16161a] hover:bg-[#1f1f26] border border-[#2a2a32] hover:border-indigo-500/50 p-5 rounded-2xl flex items-center justify-between transition-all group shadow-md cursor-pointer"
@@ -322,7 +325,7 @@ export const CommunityModule: React.FC<{
         {communityLinks.map((item, index) => (
           <a
             key={index}
-            href={`https://${item.url.replace(/^https?:\/\//, '')}`}
+            href={`https://${item.url.replace(/https?:\/\//, '')}`}
             target="_blank"
             rel="noopener noreferrer"
             className="bg-[#16161a] hover:bg-[#1f1f26] border border-[#2a2a32] hover:border-indigo-500/50 p-5 rounded-2xl flex items-center justify-between transition-all group shadow-md cursor-pointer"
@@ -1740,7 +1743,8 @@ const DailyMissionsModule: React.FC<DailyMissionsModuleProps> = ({
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || 'Error');
 
-      setSubmitStatus(t('missionsSentSuccess'));
+      startMissionsFlow(submissionsPayload.map((m: any, idx: number) => ({ id: String(idx), label: 'Missione #' + (idx + 1), mission: m })));
+      playInsertCoinReady(audioActive);setSubmitStatus(formatInsertCoinReady('Missioni inviate sull app'));
     } catch (err: any) {
 setSubmitStatus(`Error: ${err.message}`);
     } finally {
@@ -1895,7 +1899,7 @@ setSubmitStatus(`Error: ${err.message}`);
           </p>
         </div>
       ) : (
-        <>
+          <>
           {submitStatus && (
             <div className={`p-4 rounded-xl border text-xs font-bold ${submitStatus.includes('❌') ? 'bg-red-500/10 border-red-500/30 text-red-400' : 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'}`}>
               {submitStatus}
@@ -2012,7 +2016,7 @@ setSubmitStatus(`Error: ${err.message}`);
             )}
           
             </div>
-        </>
+          </>
       )}
 
       {replacingSlot && (
@@ -2097,6 +2101,19 @@ const LineupsModule: React.FC<{
 }> = ({ cards, audioActive, notifications, onClearNotifications, currentLang = 'IT', setActiveTab }) => {
   const t = (key: string) => translations[currentLang]?.[key] || translations['IT']?.[key] || key;
   const [lineupSubTab, setLineupSubTab] = useState<'IN_SEASON' | 'CLASSIC' | 'ROOMS'>('ROOMS');
+  const handleStartLineupsQueue = () => {
+    const sampleLineups = cards.slice(0, 5).map((c, idx) => ({
+      id: String(c?.id || ('lineup-' + (idx + 1))),
+      label: 'Formazione #' + (idx + 1) + (c?.name ? ' - ' + c.name : ''),
+      subTab: lineupSubTab,
+      card: c
+    }));
+    const items = sampleLineups.length > 0 ? sampleLineups : [
+      { id: 'lineup-1', label: 'Formazione #1 (' + lineupSubTab + ')', subTab: lineupSubTab },
+      { id: 'lineup-2', label: 'Formazione #2 (' + lineupSubTab + ')', subTab: lineupSubTab }
+    ];
+    startLineupsFlow(items);
+  };
 
   return (
     <div className="space-y-6 w-full">
@@ -2137,6 +2154,8 @@ const LineupsModule: React.FC<{
             <p className="text-[10px] font-bold text-[#00ff66]/80 uppercase tracking-wider">{t('bestMatchups')}</p>
           </div>
         </button>
+
+        <button type="button" onClick={handleStartLineupsQueue} className="bg-[#16161a] hover:bg-[#202028] border-2 border-[#ffea00] px-4 py-3 rounded-2xl text-xs font-black text-[#ffea00] uppercase tracking-wider transition-all cursor-pointer">Avvia coda formazioni</button>
       </div>
 
       {/* Sotto-tab delle Formazioni */}
@@ -2264,6 +2283,7 @@ const SellingModule: React.FC<SellingModuleProps> = ({ cards, token, audioActive
         durationDays: c.lastDurationDays || 7
       }));
 
+      startSalesFlow(cardsToRelist.map((c: any, idx: number) => ({ id: String(c?.id || idx), label: 'Vendita carta #' + (idx + 1), sale: c })));
       const response = await fetch(`${API_BASE_URL}/api/autosell-relist`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -2886,7 +2906,6 @@ export default function App() {
             </div>
           </div>
         ) : (
-          <>
             <div key={activeTab} className="vg-screen-enter vg-scan-wipe min-h-0 w-full">
             {activeTab === 'HOME' && (
               <HomeModule 
@@ -2935,7 +2954,7 @@ export default function App() {
                 return true;
               });
 
-              const parseNum = (v: any) => { if (typeof v === 'number') return Number.isFinite(v) ? v : 0; const n = Number(String(v ?? '0').replace(',', '.').replace(/[^0-9.-]/g, '')); return Number.isFinite(n) ? n : 0; };
+              const parseNum = (v: any) => { if (typeof v === 'number') return Number.isFinite(v) ? v : 0; const n = Number(String(v ?? '0').replace(',', '.').replace(/[0-9.-]/g, '')); return Number.isFinite(n) ? n : 0; };
               const getCardPrice = (c: any) => parseNum(c?.askingPrice ?? c?.priceEur ?? c?.minPrice ?? 0);
               const getCardName = (c: any) => String(c?.name || c?.player?.displayName || '').trim();
               const getSealScore = (c: any) => { if (typeof c?.sealed === 'number') return c.sealed; if (c?.sealed || c?.isSealed) return 1; return 0; };
@@ -3102,7 +3121,7 @@ export default function App() {
                   </div>
 
                   {myClubSubTab === 'GALLERIA' && (
-                    <>
+                      <>
                       {sortedProCards.length === 0 ? (
                         <div className="text-center py-20 bg-[#16161a] border border-[#2a2a32] rounded-2xl">
                           <p className="text-sm font-bold text-zinc-400">Nessuna carta corrisponde ai filtri selezionati.</p>
@@ -3122,7 +3141,7 @@ export default function App() {
                           ))}
                         </div>
                       )}
-                    </>
+                      </>
                   )}
 
                   {myClubSubTab === 'ALLENAMENTO' && (
@@ -3264,6 +3283,8 @@ export default function App() {
               />
             )}
             {activeTab === 'SETTING' && (
+        <>
+        <ExtensionBar />
               <SettingModule 
                 audioActive={audioActive} 
                 onToggleAudio={handleToggleAudio} 
@@ -3277,9 +3298,9 @@ export default function App() {
                 currentLang={currentLang}
                 onLanguageChange={handleLanguageChange}
               />
+        </>
             )}
           </div>
-</>
         )}
       </main>
     </div>
