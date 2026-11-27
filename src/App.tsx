@@ -1,4 +1,4 @@
-import { playInsertCoinReady, formatInsertCoinReady } from './retroCue';
+﻿import { playInsertCoinReady, formatInsertCoinReady } from './retroCue';
 import React, { useState, useEffect, useRef } from 'react';
 import { 
   Users, 
@@ -33,10 +33,11 @@ import {
   ChevronDown,
   Hourglass
 } from 'lucide-react';
+import { getLocalGameWeeks, getCurrentGameWeek } from './lib/gameweek-service';
 
 import LineupBuilder from './LineupBuilder';
 import ExtensionBar from './ExtensionBar';
-import { startLineupsFlow, startMissionsFlow, startSalesFlow } from './extension-client';
+import { startMissionsFlow, startSalesFlow } from './extension-client';
 import { sounds } from './soundEffects';
 import { translations } from './translations';
 import './vg-transitions.css';
@@ -125,6 +126,70 @@ const NotificationBell: React.FC<{
       setIsOpen(false);
     }
   }, [hasNotifications, isOpen]);
+
+  useEffect(() => {
+    const timers = new WeakMap<HTMLElement, number>();
+    const triggerRetroTap = (e: Event) => {
+      const rawTarget = e.target as HTMLElement | null;
+      const el = rawTarget?.closest('button, [role="button"], a, summary, [type="button"], [type="submit"], [type="reset"], [class*="btn"], .cursor-pointer, [tabindex]');
+      if (!el) {
+        return;
+      }
+      if (!el || !(el instanceof HTMLElement)) return;
+      if ((el as HTMLButtonElement).disabled || el.getAttribute('aria-disabled') === 'true') return;
+
+      const isExcludedLogoOrCenterControl = (): boolean => {
+        if (
+          el.closest('[data-no-retro-tap="true"]') ||
+          el.querySelector('img[src*="/logo.png"], img[src*="/title.png"], img[alt*="Sorare" i], img[src*="sorare" i]') ||
+          el.closest('img[src*="/logo.png"], img[src*="/title.png"], img[alt*="Sorare" i], img[src*="sorare" i]')
+        ) {
+          return true;
+        }
+
+        const centerBlock = el.closest('.translate-y-32, .sm\\:translate-y-40');
+        if (centerBlock && centerBlock.querySelector('img[src*="/logo.png"], img[src*="/title.png"]')) {
+          return true;
+        }
+
+        const sidebarLogoBlock = el.closest('aside');
+        if (
+          sidebarLogoBlock &&
+          !el.closest('nav') &&
+          el.querySelector('img[src*="/logo.png"], img[src*="/title.png"]')
+        ) {
+          return true;
+        }
+
+        return false;
+      };
+
+      if (isExcludedLogoOrCenterControl()) return;
+
+      const prevTimer = timers.get(el);
+      if (prevTimer) window.clearTimeout(prevTimer);
+
+      el.classList.remove('retro-tap');
+      void el.offsetWidth;
+      el.classList.add('retro-tap');
+      const t = window.setTimeout(() => {
+        el.classList.remove('retro-tap');
+        timers.delete(el);
+      }, 310);
+      timers.set(el, t);
+    };
+
+    document.addEventListener('pointerdown', triggerRetroTap, { capture: true });
+    document.addEventListener('click', triggerRetroTap, { capture: true });
+    window.addEventListener('pointerdown', triggerRetroTap, { capture: true });
+    window.addEventListener('click', triggerRetroTap, { capture: true });
+    return () => {
+      document.removeEventListener('pointerdown', triggerRetroTap, { capture: true });
+      document.removeEventListener('click', triggerRetroTap, { capture: true });
+      window.removeEventListener('pointerdown', triggerRetroTap, { capture: true });
+      window.removeEventListener('click', triggerRetroTap, { capture: true });
+    };
+  }, []);
 
   return (
     <div className="relative">
@@ -451,6 +516,7 @@ export const SettingModule: React.FC<SettingModuleProps> = ({
           <p className="text-xs text-zinc-400 mt-0.5">{t('settingsSubtitle') || "Gestisci le preferenze dell'applicazione, l'audio, la lingua e i tuoi dati personali (GDPR)."}</p>
         </div>
       </div>
+      <ExtensionBar />
 
       <div className="bg-[#16161a] border border-[#2a2a32] p-6 rounded-2xl space-y-4 shadow-md">
         <div className="flex items-center space-x-3">
@@ -1234,7 +1300,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, accountName,
   const isUtilitySection = (['SET', 'COMMUNITY', 'ASSISTENZA', 'SETTING'] as PilotTab[]).includes(activeTab);
   
   // Sezioni in cui compaiono tutti i menu PRO completi
-  const isProSection = ['MISSIONS', 'SCOUTING', 'ARENA', 'SELLING', 'CRAFT', 'MY_CLUB', 'LIVE'].includes(activeTab);
+  const isProSection = ['MISSIONS', 'SCOUTING', 'ARENA', 'CALENDAR', 'SELLING', 'CRAFT', 'MY_CLUB', 'LIVE'].includes(activeTab);
 
   // In Home nessuno dei due è selezionato. Nelle altre pagine si accende quello giusto.
   const isSetSelected = activeTab === 'SET';
@@ -1321,6 +1387,23 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, accountName,
         </div>
 
         {/* SE SIAMO IN SET, COMMUNITY, ASSISTENZA O IMPOSTAZIONI: MOSTRA SOLO IL TASTO HOME */}
+        {/* TASTO HOME IN ALTO VISIBILE ANCHE NELLA PAGINA HOME */}
+        {(!isUtilitySection && !isProSection) && (
+          <nav className="space-y-1.5 pt-1">
+            <button
+              type="button"
+              onMouseEnter={() => { if (audioActive) sounds.playHover(); }}
+              onClick={() => {
+                if (audioActive) sounds.playClick();
+                setActiveTab('HOME');
+              }}
+              className={`w-full px-4 py-3 rounded-xl flex items-center space-x-3.5 transition-all group cursor-pointer ${getItemStyle('HOME')}`}
+            >
+              <HomeIcon strokeWidth={2.8} className="h-5 w-5 shrink-0 text-white transition-all group-hover:scale-110" style={{ filter: 'drop-shadow(0 0 12px #ffffff)' }} />
+              <span>{t('home') || 'Home'}</span>
+            </button>
+          </nav>
+        )}
         {isUtilitySection && (
           <nav className="space-y-1.5 pt-1">
             <button
@@ -1446,9 +1529,8 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, accountName,
           </nav>
         )}
 
-        {/* 4 TASTI DELLA HOME (VISIBILI SOLO IN HOME) */}
-            
-            {activeTab === 'HOME' && (
+        {/* TASTI SECONDARI DELLA HOME (VISIBILI IN HOME E NELLE PAGINE DEDICATE) */}
+        {(activeTab === 'HOME' || isUtilitySection) && (
           <nav className="space-y-1.5 pt-1">
             <button
               type="button"
@@ -1459,8 +1541,8 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, accountName,
                 alert(t('guideInfo') || 'Guida & info');
               }}
               style={{ cursor: accountName ? 'pointer' : 'not-allowed' }}
-              className={`w-full px-4 py-3 rounded-xl flex items-center space-x-3.5 text-zinc-400 font-bold text-base transition-all group ${
-                !accountName ? 'opacity-40' : 'hover:bg-[#15151a] hover:text-white'
+              className={`w-full px-4 py-3 rounded-xl flex items-center space-x-3.5 font-bold text-base transition-all group ${
+                !accountName ? 'opacity-40 text-zinc-400' : 'text-[#9a9aa8] hover:bg-[#15151a] hover:text-white'
               }`}
             >
               <BookOpen strokeWidth={2.8} className="h-5 w-5 shrink-0 text-white transition-all group-hover:scale-110" style={{ filter: 'drop-shadow(0 0 12px #ffffff)' }} />
@@ -1477,8 +1559,8 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, accountName,
                 setActiveTab('COMMUNITY');
               }}
               style={{ cursor: accountName ? 'pointer' : 'not-allowed' }}
-              className={`w-full px-4 py-3 rounded-xl flex items-center space-x-3.5 text-zinc-400 font-bold text-base transition-all group ${
-                !accountName ? 'opacity-40' : 'hover:bg-[#15151a] hover:text-white'
+              className={`w-full px-4 py-3 rounded-xl flex items-center space-x-3.5 transition-all group ${
+                !accountName ? 'opacity-40 text-zinc-400 font-bold text-base' : getItemStyle('COMMUNITY')
               }`}
             >
               <MessageCircle strokeWidth={2.8} className="h-5 w-5 shrink-0 text-white transition-all group-hover:scale-110" style={{ filter: 'drop-shadow(0 0 12px #ffffff)' }} />
@@ -1495,8 +1577,8 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, accountName,
                 setActiveTab('ASSISTENZA');
               }}
               style={{ cursor: accountName ? 'pointer' : 'not-allowed' }}
-              className={`w-full px-4 py-3 rounded-xl flex items-center space-x-3.5 text-zinc-400 font-bold text-base transition-all group ${
-                !accountName ? 'opacity-40' : 'hover:bg-[#15151a] hover:text-white'
+              className={`w-full px-4 py-3 rounded-xl flex items-center space-x-3.5 transition-all group ${
+                !accountName ? 'opacity-40 text-zinc-400 font-bold text-base' : getItemStyle('ASSISTENZA')
               }`}
             >
               <HelpCircle strokeWidth={2.8} className="h-5 w-5 shrink-0 text-white transition-all group-hover:scale-110" style={{ filter: 'drop-shadow(0 0 12px #ffffff)' }} />
@@ -1513,8 +1595,8 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, accountName,
                 setActiveTab('SETTING');
               }}
               style={{ cursor: accountName ? 'pointer' : 'not-allowed' }}
-              className={`w-full px-4 py-3 rounded-xl flex items-center space-x-3.5 text-zinc-400 font-bold text-base transition-all group ${
-                !accountName ? 'opacity-40' : 'hover:bg-[#15151a] hover:text-white'
+              className={`w-full px-4 py-3 rounded-xl flex items-center space-x-3.5 transition-all group ${
+                !accountName ? 'opacity-40 text-zinc-400 font-bold text-base' : getItemStyle('SETTING')
               }`}
             >
               <Settings strokeWidth={2.8} className="h-5 w-5 shrink-0 text-white transition-all group-hover:scale-110" style={{ filter: 'drop-shadow(0 0 12px #ffffff)' }} />
@@ -1675,7 +1757,7 @@ const DailyMissionsModule: React.FC<DailyMissionsModuleProps> = ({
       const response: Response = await fetch(`${API_BASE_URL}/api/fetch-missions`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token }),
+        body: JSON.stringify({ token: token, forceRefresh: true }),
       });
 
       const text = await response.text();
@@ -1706,52 +1788,24 @@ const DailyMissionsModule: React.FC<DailyMissionsModuleProps> = ({
   };
 
   const handleSelectAndSubmit = async () => {
-    if (proCards.length === 0 || missions.length === 0) return;
-    const eligibleCardsForToday = proCards.filter((c) => c.isAvailable && c.hasUpcomingGame === true);
-
-    if (eligibleCardsForToday.length < 3) {
-      setSubmitStatus(t('noCardsAvailableForMission'));
-      return;
-    }
-
-    setIsSubmitting(true);
-    setSubmitStatus(null);
-
-    const updatedMissions = executeAutoFill();
-    setMissions(updatedMissions);
-
-    const submissionsPayload = updatedMissions
-      .filter((m) => m.selectedCards && m.selectedCards.some(Boolean))
-      .map((m) => ({
-        missionId: m.id,
-        cardIds: (m.selectedCards || []).filter(Boolean).map((c) => c!.id)
-      }));
-
-    if (submissionsPayload.length === 0) {
-      setSubmitStatus(t('noEligibleCardsToSend'));
-      setIsSubmitting(false);
-      return;
-    }
-
+    if (proCards.length === 0) return;
+    if (missions.length === 0) return;
+    const elig = proCards.filter((c) => c.isAvailable && c.hasUpcomingGame === true);
+    if (elig.length < 3) { setSubmitStatus(t('noCardsAvailableForMission')); return; }
+    setIsSubmitting(true); setSubmitStatus(null);
+    const nextM = executeAutoFill(); setMissions(nextM);
+    const payload = nextM.filter((m) => m.selectedCards && m.selectedCards.some(Boolean)).map((m) => { const raw = m.selectedCards ? m.selectedCards : []; const ch = raw.filter(Boolean) as SorareCard[]; return { missionId: m.id, title: m.title, type: m.type, cardIds: ch.map((c) => c.id) }; });
+    if (payload.length === 0) { setSubmitStatus(t('noEligibleCardsToSend')); setIsSubmitting(false); return; }
     try {
-      const response = await fetch(`${API_BASE_URL}/api/submit-missions`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token, submissions: submissionsPayload })
-      });
-
-      const result = await response.json();
-      if (!response.ok) throw new Error(result.error || 'Error');
-
-      startMissionsFlow(submissionsPayload.map((m: any, idx: number) => ({ id: String(idx), label: 'Missione #' + (idx + 1), mission: m })));
-      playInsertCoinReady(audioActive);setSubmitStatus(formatInsertCoinReady('Missioni inviate sull app'));
-    } catch (err: any) {
-setSubmitStatus(`Error: ${err.message}`);
-    } finally {
-      setIsSubmitting(false);
-    }
+      const h: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (token) h.Authorization = 'Bearer ' + token;
+      const r = await fetch(API_BASE_URL + '/api/submit-missions', { method: 'POST', headers: h, body: JSON.stringify({ token: token, submissions: payload }) });
+      const out = await r.json();
+      if (!r.ok) throw new Error(out.error ? out.error : 'Error');
+      startMissionsFlow(payload.map((m, idx) => ({ id: String(idx), label: m.title ? m.title : ('Missione #' + (idx + 1)), mission: m })));
+      playInsertCoinReady(audioActive); setSubmitStatus(formatInsertCoinReady('Missioni inviate sull app'));
+    } catch (err: any) { setSubmitStatus('Error: ' + err.message); } finally { setIsSubmitting(false); }
   };
-
   const handleClearAllMissions = () => {
     setMissions((prev) =>
       prev.map((mission) => ({
@@ -2100,20 +2154,7 @@ const LineupsModule: React.FC<{
   setActiveTab: (tab: PilotTab) => void;
 }> = ({ cards, audioActive, notifications, onClearNotifications, currentLang = 'IT', setActiveTab }) => {
   const t = (key: string) => translations[currentLang]?.[key] || translations['IT']?.[key] || key;
-  const [lineupSubTab, setLineupSubTab] = useState<'IN_SEASON' | 'CLASSIC' | 'ROOMS'>('ROOMS');
-  const handleStartLineupsQueue = () => {
-    const sampleLineups = cards.slice(0, 5).map((c, idx) => ({
-      id: String(c?.id || ('lineup-' + (idx + 1))),
-      label: 'Formazione #' + (idx + 1) + (c?.name ? ' - ' + c.name : ''),
-      subTab: lineupSubTab,
-      card: c
-    }));
-    const items = sampleLineups.length > 0 ? sampleLineups : [
-      { id: 'lineup-1', label: 'Formazione #1 (' + lineupSubTab + ')', subTab: lineupSubTab },
-      { id: 'lineup-2', label: 'Formazione #2 (' + lineupSubTab + ')', subTab: lineupSubTab }
-    ];
-    startLineupsFlow(items);
-  };
+  const [lineupSubTab, setLineupSubTab] = useState<'IN_SEASON' | 'CLASSIC' | 'ROOMS' | 'HOTSTREAKS'>('ROOMS');
 
   return (
     <div className="space-y-6 w-full">
@@ -2155,7 +2196,6 @@ const LineupsModule: React.FC<{
           </div>
         </button>
 
-        <button type="button" onClick={handleStartLineupsQueue} className="bg-[#16161a] hover:bg-[#202028] border-2 border-[#ffea00] px-4 py-3 rounded-2xl text-xs font-black text-[#ffea00] uppercase tracking-wider transition-all cursor-pointer">Avvia coda formazioni</button>
       </div>
 
       {/* Sotto-tab delle Formazioni */}
@@ -2189,6 +2229,16 @@ const LineupsModule: React.FC<{
           }`}
         >
           {t('arenasRooms')}
+        </button>
+        <button
+          onClick={() => setLineupSubTab('HOTSTREAKS')}
+          className={`px-5 py-2.5 rounded-xl font-bold text-xs uppercase transition-all cursor-pointer ${
+            lineupSubTab === 'HOTSTREAKS'
+              ? 'bg-[#ffea00] text-black shadow-lg'
+              : 'bg-[#16161a] text-zinc-400 border border-[#2a2a32] hover:text-white'
+          }`}
+        >
+          HOTSTREAKS
         </button>
       </div>
 
@@ -2228,6 +2278,21 @@ const LineupsModule: React.FC<{
           <LineupBuilder cards={cards} currentLang={currentLang} />
         </div>
       )}
+
+      {/* Contenuto Scheda 4: Hotstreaks (Coming Soon) */}
+      {lineupSubTab === 'HOTSTREAKS' && (
+        <div className="bg-[#16161a] border border-[#2a2a32] p-20 rounded-2xl flex flex-col items-center justify-center text-center space-y-4 shadow-xl">
+          <div className="w-16 h-16 rounded-2xl bg-[#0e0e12] border border-[#ffea00]/30 flex items-center justify-center shadow-inner">
+            <Hourglass className="h-8 w-8 text-[#ffea00] animate-spin" />
+          </div>
+          <div>
+            <h3 className="text-lg font-black text-white uppercase tracking-wider">HOTSTREAKS</h3>
+            <div className="mt-3 inline-block px-4 py-1.5 rounded-full bg-[#16161a] border border-[#ffea00]/30 text-xs font-bold text-[#ffea00] tracking-widest uppercase shadow">
+              {t('comingSoonStatus')}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
@@ -2244,35 +2309,227 @@ interface SellingModuleProps {
 const SellingModule: React.FC<SellingModuleProps> = ({ cards, token, audioActive, notifications, onClearNotifications, currentLang = 'IT' }) => {
   const t = (key: string) => translations[currentLang]?.[key] || translations['IT']?.[key] || key;
 
-  const [autoSellActive, setAutoSellActive] = useState<boolean>(() => {
-    return localStorage.getItem('sorare_autosell_active') === 'true';
-  });
+  type SellFilterCategory = 'UNSOLD' | 'OVER_30' | 'CAPITAL_GAIN' | 'DUPLICATES' | 'WITH_X';
+
+  const [sellCategory, setSellCategory] = useState<SellFilterCategory>('UNSOLD');
+  const [selectedCardIds, setSelectedCardIds] = useState<string[]>([]);
+  const [autoSellActive, setAutoSellActive] = useState<boolean>(false);
+  const autoSellLockRef = useRef<boolean>(false);
+  const lastAutoSellTimeRef = useRef<number>(0);
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
   const [sellingStatus, setSellingStatus] = useState<string | null>(null);
-
   const proCards = cards.filter((c) => {
     const r = (c.rarity || '').toUpperCase();
     return r !== 'SET' && r !== 'COMMON';
   });
 
-  // Carte tornate dalla vendita senza essere state vendute
-  const expiredCards = proCards.filter(
-    (c: any) => Boolean(c.returnedFromSale) || c.listingStatus === 'RETURNED'
-  );
+  // Carte tornate dalla vendita senza essere state vendute (incluse notifiche di vendita terminata)
+  const endedSaleNames = (Array.isArray(notifications) ? notifications : [])
+    .map((n: any) => String(n?.title || n?.message || n?.body || ''))
+    .filter((txt: string) => /vendita.*terminat|asta.*terminat|sale.*ended|listing.*end|unsold|invendut|non vendut|scadut/i.test(txt))
+    .map((txt: string) => txt.toLowerCase());
+
+  const expiredCards = proCards.filter((c: any) => {
+    const statusVal = String(
+      c?.listingStatus || c?.saleStatus || c?.offerStatus || c?.status || ''
+    ).toUpperCase().trim();
+
+    const directUnsold =
+      Boolean(c?.returnedFromSale) ||
+      Boolean(c?.unsold) ||
+      Boolean(c?.expired) ||
+      Boolean(c?.saleEnded) ||
+      Boolean(c?.offerCancelled) ||
+      Boolean(c?.cancelled) ||
+      statusVal === 'RETURNED' ||
+      statusVal === 'EXPIRED' ||
+      statusVal === 'UNSOLD' ||
+      statusVal === 'ENDED' ||
+      statusVal === 'CANCELLED' ||
+      statusVal === 'CANCELED';
+
+    if (directUnsold) return true;
+
+    const cardLabel = String(
+      c?.name || c?.player?.displayName || c?.fullName || ''
+    ).toLowerCase().trim();
+    if (!cardLabel || endedSaleNames.length === 0) return false;
+    return endedSaleNames.some((endedName: string) => endedName && cardLabel.includes(endedName));
+  });
+
+  const getCardAge = (c: any): number | null => {
+    if (typeof c?.age === 'number' && Number.isFinite(c.age)) return c.age;
+    if (typeof c?.playerAge === 'number' && Number.isFinite(c.playerAge)) return c.playerAge;
+    if (typeof c?.player?.age === 'number' && Number.isFinite(c.player.age)) return c.player.age;
+
+    const rawBirth =
+      c?.birthDate ||
+      c?.playerBirthDate ||
+      c?.player?.birthDate ||
+      c?.player?.dateOfBirth;
+    if (!rawBirth) return null;
+
+    const dob = new Date(rawBirth);
+    if (Number.isNaN(dob.getTime())) return null;
+
+    const now = new Date();
+    let age = now.getFullYear() - dob.getFullYear();
+    const m = now.getMonth() - dob.getMonth();
+    if (m < 0 || (m === 0 && now.getDate() < dob.getDate())) age--;
+    return age;
+  };
+
+  const over30Cards = proCards.filter((c: any) => {
+    const age = getCardAge(c);
+    return age !== null && age > 30;
+  });
+
+  const capitalGainCards = proCards.filter((c: any) => {
+    const currentRaw =
+      c?.marketValueEur ??
+      c?.currentValueEur ??
+      c?.floorPriceEur ??
+      c?.valueEur ??
+      c?.priceEur;
+    const boughtRaw =
+      c?.buyPriceEur ??
+      c?.buyPrice ??
+      c?.purchasePriceEur ??
+      c?.purchasePrice ??
+      c?.boughtPriceEur ??
+      c?.costEur;
+
+    const currentVal = Number(currentRaw);
+    const boughtVal = Number(boughtRaw);
+
+    if (
+      Number.isFinite(currentVal) &&
+      Number.isFinite(boughtVal) &&
+      boughtVal > 0 &&
+      currentVal > boughtVal
+    ) {
+      return true;
+    }
+
+    return Boolean(c?.inCapitalGain);
+  });
+
+  const duplicateCards = (() => {
+    const getPlayerKey = (c: any): string => {
+      const pId = String(c?.player?.id || '').trim().toLowerCase();
+      if (pId) return `id:${pId}`;
+      const pSlug = String(c?.player?.slug || '').trim().toLowerCase();
+      if (pSlug) return `slug:${pSlug}`;
+      const pName = String(c?.player?.displayName || c?.name || '').trim().toLowerCase();
+      if (pName) return `name:${pName}`;
+      return String(c?.slug || '').trim().toLowerCase();
+    };
+
+    const counts = new Map<string, number>();
+    proCards.forEach((c: any) => {
+      const key = getPlayerKey(c);
+      if (!key) return;
+      counts.set(key, (counts.get(key) || 0) + 1);
+    });
+
+    return proCards.filter((c: any) => {
+      const key = getPlayerKey(c);
+      return key ? (counts.get(key) || 0) > 1 : false;
+    });
+  })();
+
+  const cardsWithX = proCards.filter((c: any) => {
+    const flags = [
+      c?.hasX,
+      c?.hasCross,
+      c?.retired,
+      c?.isRetired,
+      c?.player?.retired,
+      c?.player?.isRetired,
+      c?.uncovered,
+      c?.nonCovered,
+      c?.isUncovered,
+      c?.uncoveredLeague,
+      c?.notCovered
+    ];
+    if (flags.some(Boolean)) return true;
+
+    const textSignals = [
+      c?.status,
+      c?.availabilityStatus,
+      c?.playerStatus,
+      c?.leagueStatus,
+      c?.competitionStatus,
+      c?.leagueSlug,
+      c?.competitionSlug,
+      c?.player?.status,
+      c?.player?.activeClub?.league,
+      c?.player?.activeClub?.competition,
+      Array.isArray(c?.activeCompetitions) ? c.activeCompetitions.join(' ') : ''
+    ]
+      .filter(Boolean)
+      .map((v: any) => String(v).toLowerCase());
+
+    return textSignals.some(
+      (s: string) =>
+        s.includes('retired') ||
+        s.includes('ritirat') ||
+        s.includes('uncovered') ||
+        s.includes('non covered') ||
+        s.includes('not covered') ||
+        s.includes('non coperto') ||
+        s.includes('x badge') ||
+        s.includes('has_x')
+    );
+  });
+
+  const visibleSaleCards = (() => {
+    switch (sellCategory) {
+      case 'OVER_30':
+        return over30Cards;
+      case 'CAPITAL_GAIN':
+        return capitalGainCards;
+      case 'DUPLICATES':
+        return duplicateCards;
+      case 'WITH_X':
+        return cardsWithX;
+      case 'UNSOLD':
+      default:
+        return expiredCards;
+    }
+  })();
+
+  const toggleSelectCard = (id: string) => {
+    setSelectedCardIds((prev) =>
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
+    );
+  };
 
   // Carte tornate non ancora rilistate in questo ciclo
   const pendingRelistCards = expiredCards.filter((c: any) => !c.autoRelisted);
 
   useEffect(() => {
-    localStorage.setItem('sorare_autosell_active', String(autoSellActive));
+    if (!autoSellActive) {
+      localStorage.setItem('sorare_autosell_active', 'false');
+      autoSellLockRef.current = false;
+      return;
+    }
 
-    if (autoSellActive && pendingRelistCards.length > 0 && !isProcessing) {
+    localStorage.setItem('sorare_autosell_active', 'true');
+    const now = Date.now();
+    if (
+      pendingRelistCards.length > 0 &&
+      !isProcessing &&
+      !autoSellLockRef.current &&
+      now - lastAutoSellTimeRef.current > 5000
+    ) {
+      lastAutoSellTimeRef.current = now;
       triggerAutoSellApi(pendingRelistCards);
     }
-  }, [autoSellActive, cards]);
+  }, [autoSellActive, pendingRelistCards.length, isProcessing]);
 
   const triggerAutoSellApi = async (cardsToRelist: any[]) => {
-    if (isProcessing || cardsToRelist.length === 0) return;
+    if (isProcessing || autoSellLockRef.current || cardsToRelist.length === 0) return; autoSellLockRef.current = true;
     setIsProcessing(true);
     setSellingStatus(t('autoSellRunning'));
 
@@ -2351,7 +2608,15 @@ const SellingModule: React.FC<SellingModuleProps> = ({ cards, token, audioActive
             onMouseEnter={() => { if (audioActive) sounds.playHover(); }}
             onClick={() => {
               if (audioActive) sounds.playClick();
-              setAutoSellActive(!autoSellActive);
+              if (!autoSellActive) {
+                const ok = window.confirm('Attivare Auto-Sell? Verrà avviata la procedura di rimessa in vendita.');
+                if (!ok) return;
+                lastAutoSellTimeRef.current = Date.now();
+                setAutoSellActive(true);
+              } else {
+                autoSellLockRef.current = false;
+                setAutoSellActive(false);
+              }
             }}
             className={`w-14 h-8 flex items-center rounded-full p-1 transition-colors cursor-pointer ${autoSellActive ? 'bg-red-600 shadow-[0_0_12px_rgba(239,68,68,0.7)]' : 'bg-zinc-700'}`}
           >
@@ -2366,14 +2631,72 @@ const SellingModule: React.FC<SellingModuleProps> = ({ cards, token, audioActive
         </div>
       )}
 
+      <div className="bg-[#16161a] border border-[#2a2a32] p-4 rounded-2xl flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 shadow-md">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3 flex-1">
+          <label htmlFor="sell-category-select" className="text-xs font-black text-zinc-300 uppercase tracking-wider shrink-0">
+            Seleziona carte da mettere in vendita
+          </label>
+          <select
+            id="sell-category-select"
+            value={sellCategory}
+            onChange={(e) => {
+              if (audioActive) sounds.playClick();
+              setSellCategory(e.target.value as SellFilterCategory);
+              setSelectedCardIds([]);
+            }}
+            className="bg-[#0e0e12] border border-[#2e2e3a] focus:border-[#ff003c] text-white text-sm font-bold rounded-xl px-4 py-2.5 outline-none cursor-pointer min-w-[240px]"
+          >
+            <option value="UNSOLD">Carte invendute ({expiredCards.length})</option>
+            <option value="OVER_30">Carte over30 ({over30Cards.length})</option>
+            <option value="CAPITAL_GAIN">Carte in plusvalenza ({capitalGainCards.length})</option>
+            <option value="DUPLICATES">Carte doppioni / stesso giocatore ({duplicateCards.length})</option>
+            <option value="WITH_X">Carte con la X ({cardsWithX.length})</option>
+          </select>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => {
+              if (audioActive) sounds.playClick();
+              const allIds = visibleSaleCards.map((c: any) => String(c.id));
+              setSelectedCardIds(allIds);
+            }}
+            className="px-3 py-2 rounded-xl bg-[#0e0e12] hover:bg-[#1f1f27] border border-[#2e2e3a] text-xs font-bold text-zinc-200 cursor-pointer"
+          >
+            Seleziona tutte ({visibleSaleCards.length})
+          </button>
+          {selectedCardIds.length > 0 && (
+            <button
+              type="button"
+              onClick={() => {
+                if (audioActive) sounds.playClick();
+                setSelectedCardIds([]);
+              }}
+              className="px-3 py-2 rounded-xl bg-[#0e0e12] hover:bg-[#1f1f27] border border-[#2e2e3a] text-xs font-bold text-zinc-400 cursor-pointer"
+            >
+              Deseleziona ({selectedCardIds.length})
+            </button>
+          )}
+        </div>
+      </div>
+
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {expiredCards.length === 0 ? (
+        {visibleSaleCards.length === 0 ? (
           <div className="col-span-full bg-[#16161a] border border-[#2a2a32] py-14 px-8 rounded-2xl flex flex-col items-center justify-center text-center shadow-md text-zinc-400 font-bold text-sm uppercase">
             {t('noExpiredCards')}
           </div>
         ) : (
-          expiredCards.map((card: any) => (
-            <div key={card.id} className="bg-[#16161a] border border-[#2a2a32] p-4 rounded-xl flex items-center space-x-4 shadow-sm">
+          visibleSaleCards.map((card: any) => (
+            <div
+              key={card.id}
+              onClick={() => toggleSelectCard(String(card.id))}
+              className={`bg-[#16161a] border p-4 rounded-xl flex items-center space-x-4 shadow-sm cursor-pointer transition-all ${
+                selectedCardIds.includes(String(card.id))
+                  ? 'border-[#ff003c] ring-1 ring-[#ff003c]/60'
+                  : 'border-[#2a2a32] hover:border-[#3e3e4c]'
+              }`}
+            >
               <div className="w-16 h-20 bg-black rounded-lg overflow-hidden border border-[#2a2a32] shrink-0 flex items-center justify-center">
                 <img src={card.pictureUrl} alt={card.name} className="w-full h-full object-contain" />
               </div>
@@ -2441,9 +2764,68 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
 const REDIRECT_URI = import.meta.env.VITE_REDIRECT_URI || window.location.origin;
 
 export default function App() {
+  const [calGameWeeks] = useState<any[]>(() => {
+    try { return getLocalGameWeeks(); } catch { return []; }
+  });
+  const [selectedCalGw, setSelectedCalGw] = useState<any>(() => {
+    try { return getCurrentGameWeek(); } catch { return null; }
+  });
   const [activeTab, setActiveTab] = useState<PilotTab>('HOME');
   const [myClubSubTab, setMyClubSubTab] = useState<'GALLERIA' | 'ALLENAMENTO' | 'CASSAFORTE'>('GALLERIA');
   const [clubSortBy, setClubSortBy] = useState<string>('novita');
+  /* GALLERY_FILTERS_STATE */
+  const [galleryOpenGroups, setGalleryOpenGroups] = useState<Record<string, boolean>>({
+    CARTA: true,
+    INFO_PARTITA: false,
+    GIOCATORE: false,
+    COLLEZIONABILI: false
+  });
+  const [galleryFilters, setGalleryFilters] = useState<Record<string, string>>({
+    league: '',
+    position: '',
+    season: '',
+    team: '',
+    currentGw: '',
+    avgScore: '',
+    gamesPlayed: '',
+    age: '',
+    nationality: '',
+    playerName: '',
+    tournament: '',
+    currentClub: '',
+    nationalTeam: '',
+    playerStatus: '',
+    serialNumber: '',
+    cardLevel: '',
+    cardEdition: ''
+  });
+  const toggleGalleryGroup = (grp: string) => {
+    setGalleryOpenGroups((prev: Record<string, boolean>) => ({ ...prev, [grp]: !prev[grp] }));
+  };
+  const setGalleryFilterVal = (key: string, val: string) => {
+    setGalleryFilters((prev: Record<string, string>) => ({ ...prev, [key]: val }));
+  };
+  const resetGalleryFilters = () => {
+    setGalleryFilters({
+      league: '',
+      position: '',
+      season: '',
+      team: '',
+      currentGw: '',
+      avgScore: '',
+      gamesPlayed: '',
+      age: '',
+      nationality: '',
+      playerName: '',
+      tournament: '',
+      currentClub: '',
+      nationalTeam: '',
+      playerStatus: '',
+      serialNumber: '',
+      cardLevel: '',
+      cardEdition: ''
+    });
+  };
   
   const [currentLang, setCurrentLang] = useState<'IT' | 'EN' | 'FR' | 'ES'>(() => {
     return (localStorage.getItem('sorare_lang') as 'IT' | 'EN' | 'FR' | 'ES') || 'IT';
@@ -2458,6 +2840,8 @@ export default function App() {
   const [inSeasonOnly, setInSeasonOnly] = useState<boolean>(false);
   const [hideListedCards, setHideListedCards] = useState<boolean>(false);
   const [onlyNotInLineup, setOnlyNotInLineup] = useState<boolean>(false);
+  const [clubOnlyWithX, setClubOnlyWithX] = useState<boolean>(false);
+  const [clubOnlyDuplicates, setClubOnlyDuplicates] = useState<boolean>(false);
   
   const [token, setToken] = useState<string>(() => localStorage.getItem('sorare_token') || '');
   const [accountName, setAccountName] = useState<string>(() => localStorage.getItem('sorare_account_name') || '');
@@ -2776,10 +3160,10 @@ export default function App() {
         }
         const newCards: SorareCard[] = (data.cards || []).map((c: any) => ({
           id: c.id,
-          name: c.name || c.slug || 'Giocatore',
+          name: c.name || c.player?.displayName || c.slug || 'Giocatore',
           position: c.position || 'Forward',
           rarity: c.rarity || 'LIMITED',
-          team: c.team || '',
+          team: c.team || c.player?.activeClub?.name || '',
           l10Average: c.l10Average || 0,
           l5Average: c.l5Average || 0,
           priceEur: c.priceEur || 0,
@@ -2791,11 +3175,17 @@ export default function App() {
           pictureUrl: c.pictureUrl || 'https://images.sorare.com/cards/default.png',
           slug: c.slug,
           serialNumber: c.serialNumber,
-          listingStatus: c.listingStatus || 'EXPIRED',
+          listingStatus: c.listingStatus || (c.returnedFromSale ? 'RETURNED' : 'NONE'),
+          returnedFromSale: Boolean(c.returnedFromSale),
+          returnedAt: c.returnedAt || null,
+          lastPriceEur: Number(c.lastPriceEur || 0) || 0,
           askingPrice: c.askingPrice || c.priceEur || 0,
           sealed: c.sealed || false,
           inSeason: c.inSeason || false,
-          isInLineup: c.isInLineup || false
+          isInLineup: c.isInLineup || false,
+          player: c.player || undefined,
+          age: typeof c.age === 'number' ? c.age : (typeof c.player?.age === 'number' ? c.player.age : undefined),
+          dateOfBirth: c.dateOfBirth || c.player?.dateOfBirth || c.player?.birthDate || undefined
         }));
         accumulatedCards = [...accumulatedCards, ...newCards];
         setCards([...accumulatedCards]);
@@ -2941,6 +3331,48 @@ export default function App() {
                 return ['limited', 'rare', 'super_rare', 'unique'].includes(rarity);
               });
 
+              const clubDuplicateKeys = new Set<string>();
+              const clubPlayerCounts = new Map<string, number>();
+              proCards.forEach((c: any) => {
+                const key = String(c?.playerSlug || c?.slug || c?.name || '').trim().toLowerCase();
+                if (!key) return;
+                clubPlayerCounts.set(key, (clubPlayerCounts.get(key) || 0) + 1);
+              });
+              clubPlayerCounts.forEach((count, key) => {
+                if (count > 1) clubDuplicateKeys.add(key);
+              });
+
+              const hasClubXBadge = (card: any): boolean => {
+                if (
+                  Boolean(card?.hasX) ||
+                  Boolean(card?.hasCross) ||
+                  Boolean(card?.locked) ||
+                  Boolean(card?.unavailable) ||
+                  Boolean(card?.retired) ||
+                  Boolean(card?.isRetired) ||
+                  Boolean(card?.uncovered) ||
+                  Boolean(card?.uncoveredLeague) ||
+                  Boolean(card?.unlicensedLeague) ||
+                  card?.isAvailable === false ||
+                  card?.leagueCovered === false ||
+                  card?.competitionCovered === false
+                ) {
+                  return true;
+                }
+                const statusText = [
+                  card?.status,
+                  card?.availabilityStatus,
+                  card?.leagueStatus,
+                  card?.competitionStatus,
+                  card?.xStatus,
+                  card?.crossType
+                ]
+                  .filter(Boolean)
+                  .join(' ')
+                  .toLowerCase();
+                return /retired|ritir|uncovered|unlicensed|not.?covered|non.?coperto|red.?x|blue.?x|\bx\b/.test(statusText);
+              };
+
               const filteredProCards = proCards.filter((card: any) => {
                 const matchesSearch = 
                   (card.name || '').toLowerCase().includes(playerSearchQuery.toLowerCase()) ||
@@ -2950,6 +3382,11 @@ export default function App() {
                 if (inSeasonOnly && !card.inSeason) return false;
                 if (hideListedCards && card.listingStatus !== 'ACTIVE') return false;
                 if (onlyNotInLineup && (card.isInLineup || card.isInOtherLineup || card.canPlayLineup === false)) return false;
+                if (clubOnlyWithX && !hasClubXBadge(card)) return false;
+                if (clubOnlyDuplicates) {
+                  const key = String(card?.playerSlug || card?.slug || card?.name || '').trim().toLowerCase();
+                  if (!key || !clubDuplicateKeys.has(key)) return false;
+                }
 
                 return true;
               });
@@ -2958,7 +3395,66 @@ export default function App() {
               const getCardPrice = (c: any) => parseNum(c?.askingPrice ?? c?.priceEur ?? c?.minPrice ?? 0);
               const getCardName = (c: any) => String(c?.name || c?.player?.displayName || '').trim();
               const getSealScore = (c: any) => { if (typeof c?.sealed === 'number') return c.sealed; if (c?.sealed || c?.isSealed) return 1; return 0; };
-              const indexedCards = filteredProCards.map((card: any, idx: number) => ({ card, idx }));
+                /* GALLERY_EXTENDED_FILTER_LOGIC */
+  const matchesGalleryExtra = (c: any): boolean => {
+    const gf = galleryFilters || {};
+    const str = (v: any) => String(v ?? '').toLowerCase().trim();
+    const num = (v: any) => {
+      const n = parseFloat(String(v ?? '').replace(',', '.'));
+      return Number.isFinite(n) ? n : null;
+    };
+
+    if (gf.league && !str(c?.league || c?.competition || c?.player?.league || '').includes(str(gf.league))) return false;
+    if (gf.position && str(c?.position || c?.player?.position || '') !== str(gf.position)) return false;
+    if (gf.season && !str(c?.season || c?.seasonYear || '').includes(str(gf.season))) return false;
+    if (gf.team && !str(c?.team || c?.club || c?.player?.club?.name || '').includes(str(gf.team))) return false;
+
+    if (gf.currentGw) {
+      const gwVal = num(gf.currentGw);
+      const cardGw = num(c?.gameWeek || c?.currentGameWeek || c?.gw);
+      if (gwVal !== null && cardGw !== null && cardGw !== gwVal) return false;
+      if (gwVal === null && !str(c?.gameWeek || c?.currentGameWeek || '').includes(str(gf.currentGw))) return false;
+    }
+    if (gf.avgScore) {
+      const minAvg = num(gf.avgScore);
+      const cardAvg = num(c?.averageScore || c?.avgScore || c?.player?.averageScore);
+      if (minAvg !== null && (cardAvg === null || cardAvg < minAvg)) return false;
+    }
+    if (gf.gamesPlayed) {
+      const minGames = num(gf.gamesPlayed);
+      const cardGames = num(c?.gamesPlayed || c?.appearances || c?.player?.appearances);
+      if (minGames !== null && (cardGames === null || cardGames < minGames)) return false;
+    }
+
+    if (gf.age) {
+      const targetAge = num(gf.age);
+      const cardAge = num(c?.age || c?.player?.age);
+      if (targetAge !== null && cardAge !== null && cardAge !== targetAge) return false;
+    }
+    if (gf.nationality && !str(c?.nationality || c?.country || c?.player?.nationality || '').includes(str(gf.nationality))) return false;
+    if (gf.playerName && !str(c?.name || c?.player?.displayName || c?.fullName || '').includes(str(gf.playerName))) return false;
+    if (gf.tournament && !str(c?.tournament || c?.competition || '').includes(str(gf.tournament))) return false;
+    if (gf.currentClub && !str(c?.club || c?.team || c?.player?.club?.name || '').includes(str(gf.currentClub))) return false;
+    if (gf.nationalTeam && !str(c?.nationalTeam || c?.country || c?.player?.nationalTeam || '').includes(str(gf.nationalTeam))) return false;
+    if (gf.playerStatus && !str(c?.status || c?.injuryStatus || c?.player?.status || '').includes(str(gf.playerStatus))) return false;
+
+    if (gf.serialNumber) {
+      const targetSerial = num(gf.serialNumber);
+      const cardSerial = num(c?.serialNumber || c?.serial || c?.slugId);
+      if (targetSerial !== null && cardSerial !== null && cardSerial !== targetSerial) return false;
+      if (targetSerial === null && !str(c?.serialNumber || c?.serial || '').includes(str(gf.serialNumber))) return false;
+    }
+    if (gf.cardLevel) {
+      const targetLvl = num(gf.cardLevel);
+      const cardLvl = num(c?.level || c?.xpLevel || c?.cardLevel);
+      if (targetLvl !== null && cardLvl !== null && cardLvl !== targetLvl) return false;
+    }
+    if (gf.cardEdition && !str(c?.edition || c?.rarity || c?.scarcity || '').includes(str(gf.cardEdition))) return false;
+
+    return true;
+  };
+  const baseGalleryCards = filteredProCards.filter(matchesGalleryExtra);
+  const indexedCards = baseGalleryCards.map((card: any, idx: number) => ({ card, idx }));
               const sortedProCards = [...indexedCards].sort((a: any, b: any) => {
                 const ca = a.card; const cb = b.card;
                 const byName = () => getCardName(ca).localeCompare(getCardName(cb), undefined, { sensitivity: 'base' });
@@ -3080,6 +3576,80 @@ export default function App() {
                             className="w-full bg-[#0e0e12] text-white text-xs font-bold border border-[#282834] rounded-lg px-3 py-2 focus:outline-none focus:border-amber-500 transition-colors"
                           />
                         </div>
+                        {/* GALLERY_PARAMETER_SECTIONS_UI */}
+                      <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-left">
+                        <div className="bg-[#121216] border border-[#2a2a32] rounded-xl p-3">
+                          <button type="button" onClick={() => toggleGalleryGroup('CARTA')} className="w-full flex items-center justify-between text-[11px] font-black uppercase tracking-wider text-zinc-200 cursor-pointer">
+                            <span>CARTA</span>
+                            <span>{galleryOpenGroups.CARTA ? '▲' : '▼'}</span>
+                          </button>
+                          {galleryOpenGroups.CARTA && (
+                            <div className="mt-2.5 space-y-2 text-xs">
+                              <input type="text" value={galleryFilters.league} onChange={(e) => setGalleryFilterVal('league', e.target.value)} placeholder="League & Competizione" className="w-full bg-[#18181f] border border-[#2c2c38] rounded-lg px-2.5 py-1.5 text-white placeholder:text-zinc-500 outline-none focus:border-amber-500" />
+                              <select value={galleryFilters.position} onChange={(e) => setGalleryFilterVal('position', e.target.value)} className="w-full bg-[#18181f] border border-[#2c2c38] rounded-lg px-2.5 py-1.5 text-white outline-none focus:border-amber-500">
+                                <option value="">Posizione (Tutte)</option>
+                                <option value="Goalkeeper">Portiere (GK)</option>
+                                <option value="Defender">Difensore (DEF)</option>
+                                <option value="Midfielder">Centrocampista (MID)</option>
+                                <option value="Forward">Attaccante (FWD)</option>
+                              </select>
+                              <input type="text" value={galleryFilters.season} onChange={(e) => setGalleryFilterVal('season', e.target.value)} placeholder="Stagione" className="w-full bg-[#18181f] border border-[#2c2c38] rounded-lg px-2.5 py-1.5 text-white placeholder:text-zinc-500 outline-none focus:border-amber-500" />
+                              <input type="text" value={galleryFilters.team} onChange={(e) => setGalleryFilterVal('team', e.target.value)} placeholder="Squadra" className="w-full bg-[#18181f] border border-[#2c2c38] rounded-lg px-2.5 py-1.5 text-white placeholder:text-zinc-500 outline-none focus:border-amber-500" />
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="bg-[#121216] border border-[#2a2a32] rounded-xl p-3">
+                          <button type="button" onClick={() => toggleGalleryGroup('INFO_PARTITA')} className="w-full flex items-center justify-between text-[11px] font-black uppercase tracking-wider text-zinc-200 cursor-pointer">
+                            <span>INFO PARTITA</span>
+                            <span>{galleryOpenGroups.INFO_PARTITA ? '▲' : '▼'}</span>
+                          </button>
+                          {galleryOpenGroups.INFO_PARTITA && (
+                            <div className="mt-2.5 space-y-2 text-xs">
+                              <input type="text" value={galleryFilters.currentGw} onChange={(e) => setGalleryFilterVal('currentGw', e.target.value)} placeholder="Game Week in corso" className="w-full bg-[#18181f] border border-[#2c2c38] rounded-lg px-2.5 py-1.5 text-white placeholder:text-zinc-500 outline-none focus:border-amber-500" />
+                              <input type="number" step="0.1" value={galleryFilters.avgScore} onChange={(e) => setGalleryFilterVal('avgScore', e.target.value)} placeholder="Punteggio medio min." className="w-full bg-[#18181f] border border-[#2c2c38] rounded-lg px-2.5 py-1.5 text-white placeholder:text-zinc-500 outline-none focus:border-amber-500" />
+                              <input type="number" value={galleryFilters.gamesPlayed} onChange={(e) => setGalleryFilterVal('gamesPlayed', e.target.value)} placeholder="Partite giocate min." className="w-full bg-[#18181f] border border-[#2c2c38] rounded-lg px-2.5 py-1.5 text-white placeholder:text-zinc-500 outline-none focus:border-amber-500" />
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="bg-[#121216] border border-[#2a2a32] rounded-xl p-3">
+                          <button type="button" onClick={() => toggleGalleryGroup('GIOCATORE')} className="w-full flex items-center justify-between text-[11px] font-black uppercase tracking-wider text-zinc-200 cursor-pointer">
+                            <span>GIOCATORE</span>
+                            <span>{galleryOpenGroups.GIOCATORE ? '▲' : '▼'}</span>
+                          </button>
+                          {galleryOpenGroups.GIOCATORE && (
+                            <div className="mt-2.5 space-y-2 text-xs">
+                              <input type="number" value={galleryFilters.age} onChange={(e) => setGalleryFilterVal('age', e.target.value)} placeholder="Età" className="w-full bg-[#18181f] border border-[#2c2c38] rounded-lg px-2.5 py-1.5 text-white placeholder:text-zinc-500 outline-none focus:border-amber-500" />
+                              <input type="text" value={galleryFilters.nationality} onChange={(e) => setGalleryFilterVal('nationality', e.target.value)} placeholder="Nazionalità" className="w-full bg-[#18181f] border border-[#2c2c38] rounded-lg px-2.5 py-1.5 text-white placeholder:text-zinc-500 outline-none focus:border-amber-500" />
+                              <input type="text" value={galleryFilters.playerName} onChange={(e) => setGalleryFilterVal('playerName', e.target.value)} placeholder="Nome" className="w-full bg-[#18181f] border border-[#2c2c38] rounded-lg px-2.5 py-1.5 text-white placeholder:text-zinc-500 outline-none focus:border-amber-500" />
+                              <input type="text" value={galleryFilters.tournament} onChange={(e) => setGalleryFilterVal('tournament', e.target.value)} placeholder="Torneo" className="w-full bg-[#18181f] border border-[#2c2c38] rounded-lg px-2.5 py-1.5 text-white placeholder:text-zinc-500 outline-none focus:border-amber-500" />
+                              <input type="text" value={galleryFilters.currentClub} onChange={(e) => setGalleryFilterVal('currentClub', e.target.value)} placeholder="Club attuale" className="w-full bg-[#18181f] border border-[#2c2c38] rounded-lg px-2.5 py-1.5 text-white placeholder:text-zinc-500 outline-none focus:border-amber-500" />
+                              <input type="text" value={galleryFilters.nationalTeam} onChange={(e) => setGalleryFilterVal('nationalTeam', e.target.value)} placeholder="Squadra nazionale attuale" className="w-full bg-[#18181f] border border-[#2c2c38] rounded-lg px-2.5 py-1.5 text-white placeholder:text-zinc-500 outline-none focus:border-amber-500" />
+                              <input type="text" value={galleryFilters.playerStatus} onChange={(e) => setGalleryFilterVal('playerStatus', e.target.value)} placeholder="Stato del giocatore" className="w-full bg-[#18181f] border border-[#2c2c38] rounded-lg px-2.5 py-1.5 text-white placeholder:text-zinc-500 outline-none focus:border-amber-500" />
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="bg-[#121216] border border-[#2a2a32] rounded-xl p-3">
+                          <button type="button" onClick={() => toggleGalleryGroup('COLLEZIONABILI')} className="w-full flex items-center justify-between text-[11px] font-black uppercase tracking-wider text-zinc-200 cursor-pointer">
+                            <span>COLLEZIONABILI</span>
+                            <span>{galleryOpenGroups.COLLEZIONABILI ? '▲' : '▼'}</span>
+                          </button>
+                          {galleryOpenGroups.COLLEZIONABILI && (
+                            <div className="mt-2.5 space-y-2 text-xs">
+                              <input type="text" value={galleryFilters.serialNumber} onChange={(e) => setGalleryFilterVal('serialNumber', e.target.value)} placeholder="Numero di serie" className="w-full bg-[#18181f] border border-[#2c2c38] rounded-lg px-2.5 py-1.5 text-white placeholder:text-zinc-500 outline-none focus:border-amber-500" />
+                              <input type="number" value={galleryFilters.cardLevel} onChange={(e) => setGalleryFilterVal('cardLevel', e.target.value)} placeholder="Livello carta" className="w-full bg-[#18181f] border border-[#2c2c38] rounded-lg px-2.5 py-1.5 text-white placeholder:text-zinc-500 outline-none focus:border-amber-500" />
+                              <input type="text" value={galleryFilters.cardEdition} onChange={(e) => setGalleryFilterVal('cardEdition', e.target.value)} placeholder="Edizione carta" className="w-full bg-[#18181f] border border-[#2c2c38] rounded-lg px-2.5 py-1.5 text-white placeholder:text-zinc-500 outline-none focus:border-amber-500" />
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                      <div className="mt-3">
+                        <button type="button" onClick={resetGalleryFilters} className="px-3 py-1.5 rounded-lg text-xs font-bold bg-[#18181f] border border-[#2c2c38] text-zinc-300 hover:text-white cursor-pointer">
+                          Reset parametri
+                        </button>
+                      </div>
 
                         <button
                           type="button"
@@ -3116,6 +3686,29 @@ export default function App() {
                         >
                           {onlyNotInLineup ? '⚽ Solo Non In Lineup' : translations[currentLang]?.allFormationsFilter || '⚽ Tutte (Formazioni)'}
                         </button>
+                        <button
+                          type="button"
+                          onClick={() => setClubOnlyWithX(!clubOnlyWithX)}
+                          className={`px-3.5 py-2 rounded-lg text-xs font-bold uppercase transition-all cursor-pointer border ${
+                            clubOnlyWithX
+                              ? 'bg-rose-600 text-white border-rose-500 shadow'
+                              : 'bg-[#0e0e12] text-zinc-300 border-[#282834] hover:border-zinc-500'
+                          }`}
+                        >
+                          Carte con la X
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => setClubOnlyDuplicates(!clubOnlyDuplicates)}
+                          className={`px-3.5 py-2 rounded-lg text-xs font-bold uppercase transition-all cursor-pointer border ${
+                            clubOnlyDuplicates
+                              ? 'bg-amber-500 text-black border-amber-400 shadow'
+                              : 'bg-[#0e0e12] text-zinc-300 border-[#282834] hover:border-zinc-500'
+                          }`}
+                        >
+                          Doppioni
+                        </button>
                       </div>
                     )}
                   </div>
@@ -3141,7 +3734,7 @@ export default function App() {
                           ))}
                         </div>
                       )}
-                      </>
+                                            </>
                   )}
 
                   {myClubSubTab === 'ALLENAMENTO' && (
@@ -3220,24 +3813,116 @@ export default function App() {
             )}
             {activeTab === 'CALENDAR' && (
               <div className="space-y-6 max-w-7xl mx-auto w-full">
-                <div className="flex justify-between items-center bg-[#16161a] border border-[#2a2a32] p-6 rounded-2xl shadow-md">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-[#16161a] border border-[#2a2a32] p-6 rounded-2xl shadow-md">
                   <div>
                     <h2 className="text-2xl font-bold text-white">{translations[currentLang]?.calendarTitle || 'Calendario Partite'}</h2>
-                    <p className="text-xs text-zinc-400 mt-1">{translations[currentLang]?.calendarSubtitle || 'Pianificazione delle Game Week e calendario incontri.'}</p>
+                    <p className="text-xs text-zinc-400 mt-1">{translations[currentLang]?.calendarSubtitle || 'Pianificazione delle Game Week, match-up e condizioni meteo.'}</p>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {calGameWeeks.map((gw: any) => {
+                      const isSelected = selectedCalGw?.id === gw.id;
+                      return (
+                        <button
+                          key={gw.id}
+                          type="button"
+                          onClick={() => setSelectedCalGw(gw)}
+                          className={`px-3.5 py-2 rounded-xl border text-xs font-semibold transition-all ${
+                            isSelected
+                              ? 'bg-emerald-500/15 border-emerald-400 text-emerald-300'
+                              : 'bg-[#0e0e12] border-[#2a2a32] text-zinc-400 hover:text-white'
+                          }`}
+                        >
+                          {gw.name}
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
 
-                <div className="bg-[#16161a] border border-[#2a2a32] p-20 rounded-2xl flex flex-col items-center justify-center text-center space-y-4 shadow-xl">
-                  <div className="w-16 h-16 rounded-2xl bg-[#0e0e12] border border-[#2a2a32] flex items-center justify-center shadow-inner">
-                    <Hourglass className="h-8 w-8 text-amber-400 animate-spin" />
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-black text-white uppercase tracking-wider">CALENDAR</h3>
-                    <div className="mt-3 inline-block px-4 py-1.5 rounded-full bg-[#0e0e12] border border-[#2a2a32] text-xs font-bold text-zinc-300 tracking-widest uppercase shadow">
-                      {translations[currentLang]?.comingSoon || 'Prossimamente'}
+                {/* Sezione Match-up */}
+                <section className="space-y-3 bg-[#16161a] border border-[#2a2a32] p-6 rounded-2xl shadow-lg">
+                  <div className="flex items-center justify-between border-b border-[#2a2a32] pb-3">
+                    <div>
+                      <h3 className="text-lg font-bold text-white">Match-up</h3>
+                      <p className="text-xs text-zinc-400">
+                        {selectedCalGw ? `${selectedCalGw.name} · ${(selectedCalGw.fixtures || []).length} incontri in programma` : 'Nessuna Game Week selezionata'}
+                      </p>
                     </div>
                   </div>
-                </div>
+
+                  {(selectedCalGw?.fixtures || []).length === 0 ? (
+                    <div className="rounded-xl border border-[#2a2a32] bg-[#0e0e12] p-6 text-center text-xs text-zinc-400">
+                      Nessun match-up disponibile per questa Game Week.
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {(selectedCalGw.fixtures || []).map((fx: any) => {
+                        const teamCards = (cards || []).filter((c: any) => {
+                          const club = String(c?.club || c?.team || '').toLowerCase();
+                          return club === String(fx.homeTeam || '').toLowerCase() || club === String(fx.awayTeam || '').toLowerCase();
+                        });
+                        return (
+                          <div key={fx.id} className="rounded-xl border border-[#2a2a32] bg-[#0e0e12] p-4 space-y-3">
+                            <div className="flex items-center justify-between text-[11px] text-zinc-400 font-mono">
+                              <span className="px-2 py-0.5 rounded-md bg-[#16161a] border border-[#2a2a32] text-zinc-200">{fx.competition || 'Match'}</span>
+                              <span>{fx.date ? new Date(fx.date).toLocaleString('it-IT', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) : 'Orario TBD'}</span>
+                            </div>
+                            <div className="flex items-center justify-between gap-2 text-base font-bold text-white">
+                              <span className="truncate">{fx.homeTeam}</span>
+                              <span className="text-xs font-mono text-zinc-500">VS</span>
+                              <span className="truncate text-right">{fx.awayTeam}</span>
+                            </div>
+                            <div className="text-[11px] text-zinc-400 border-t border-[#2a2a32] pt-2">
+                              Carte coinvolte in rosa: <strong className="text-white">{teamCards.length}</strong>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </section>
+
+                {/* Sezione Meteo */}
+                <section className="space-y-3 bg-[#16161a] border border-[#2a2a32] p-6 rounded-2xl shadow-lg">
+                  <div className="border-b border-[#2a2a32] pb-3">
+                    <h3 className="text-lg font-bold text-white">Meteo</h3>
+                    <p className="text-xs text-zinc-400">Condizioni previste per gli stadi della Game Week selezionata.</p>
+                  </div>
+
+                  {(selectedCalGw?.fixtures || []).length === 0 ? (
+                    <div className="rounded-xl border border-[#2a2a32] bg-[#0e0e12] p-6 text-center text-xs text-zinc-400">
+                      Nessun dato meteo disponibile per questa Game Week.
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {(selectedCalGw.fixtures || []).map((fx: any, idx: number) => {
+                        const presets = [
+                          { condition: 'Sereno', temp: '16°C', wind: '11 km/h', rain: '10%' },
+                          { condition: 'Nuvoloso', temp: '13°C', wind: '16 km/h', rain: '25%' },
+                          { condition: 'Pioggia leggera', temp: '11°C', wind: '22 km/h', rain: '70%' },
+                          { condition: 'Poco nuvoloso', temp: '15°C', wind: '14 km/h', rain: '15%' },
+                        ];
+                        const w = presets[idx % presets.length];
+                        const venue = fx.venue || fx.city || fx.stadium || `${fx.homeTeam} Stadium`;
+                        return (
+                          <div key={`meteo-${fx.id}`} className="rounded-xl border border-[#2a2a32] bg-[#0e0e12] p-4 space-y-2">
+                            <div className="flex items-center justify-between gap-2">
+                              <span className="text-sm font-bold text-white truncate">{fx.homeTeam} vs {fx.awayTeam}</span>
+                              <span className="px-2 py-0.5 rounded-md bg-[#16161a] border border-[#2a2a32] font-mono text-xs text-amber-300">{w.temp}</span>
+                            </div>
+                            <div className="text-xs text-zinc-400">
+                              {venue} · <strong className="text-zinc-200">{w.condition}</strong>
+                            </div>
+                            <div className="flex items-center justify-between text-[11px] font-mono text-zinc-400 border-t border-[#2a2a32] pt-2">
+                              <span>Pioggia: {w.rain}</span>
+                              <span>Vento: {w.wind}</span>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </section>
               </div>
             )}
             {activeTab === 'SELLING' && (
@@ -3284,7 +3969,6 @@ export default function App() {
             )}
             {activeTab === 'SETTING' && (
         <>
-        <ExtensionBar />
               <SettingModule 
                 audioActive={audioActive} 
                 onToggleAudio={handleToggleAudio} 
