@@ -790,7 +790,7 @@ function SlotCard({ title, card, captainId, getL10, onSetCaptain, t }: SlotCardP
   const teamName = card.team || card.player?.activeClub?.name || 'Club';
 
   return (
-    <div className={`relative bg-gray-950 border ${isCaptain ? 'border-amber-400 ring-2 ring-amber-400/20' : 'border-gray-800'} rounded-xl p-4 flex flex-col items-center text-center shadow-lg justify-between`}>
+    <div className={`relative bg-gray-950 border ${isCaptain ? 'border-amber-400 ring-1 ring-amber-400/20' : 'border-gray-800'} rounded-xl p-4 flex flex-col items-center text-center shadow-lg justify-between`}>
       <div>
         {isCaptain && (
           <span className="absolute top-2 right-2 bg-amber-400 text-gray-950 text-[10px] font-black px-1.5 py-0.5 rounded shadow">

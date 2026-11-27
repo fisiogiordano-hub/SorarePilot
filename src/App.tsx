@@ -200,12 +200,12 @@ const NotificationBell: React.FC<{
           if (hasNotifications) setIsOpen(!isOpen);
         }}
         onMouseEnter={() => { if (audioActive) sounds.playHover(); }}
-        className="w-12 h-12 rounded-2xl flex items-center justify-center transition-all shadow-2xl relative group bg-[#16161a] hover:bg-[#202028] border-2 border-zinc-700 hover:border-amber-500/50 cursor-pointer"
+        className="w-12 h-12 rounded-2xl flex items-center justify-center transition-all shadow-sm relative group bg-[#16161a] hover:bg-[#202028] border-2 border-zinc-700 hover:border-amber-500/50 cursor-pointer"
         title={hasNotifications ? `${count} ${t('notificationsToRead') || 'notifiche da leggere'}` : (t('notificationCenterTitle') || 'Centro Notifiche (Nessuna nuova notifica)')}
       >
         <Bell className="h-5 w-5 text-zinc-300 group-hover:text-amber-400 transition-transform group-hover:scale-110" />
         {hasNotifications && (
-          <span className="absolute -bottom-1.5 -right-1.5 min-w-[22px] h-[22px] px-1 rounded-full bg-red-600 text-white text-[11px] font-black flex items-center justify-center border-2 border-[#0e0e12] shadow-[0_0_10px_rgba(220,38,38,0.9)]">
+          <span className="absolute -bottom-1.5 -right-1.5 min-w-[22px] h-[22px] px-1 rounded-full bg-red-600 text-white text-[11px] font-black flex items-center justify-center border-2 border-[#0e0e12] shadow-[0_0_3px_rgba(220,38,38,0.55)]">
             {count}
           </span>
         )}
@@ -428,7 +428,7 @@ export const LiveModule: React.FC<{
         <NotificationBell audioActive={audioActive} notifications={notifications} onClearNotifications={onClearNotifications} currentLang={currentLang} />
       </div>
       <div className="bg-[#16161a] border border-[#2a2a32] p-16 rounded-2xl flex flex-col items-center justify-center text-center shadow-md space-y-3">
-        <div className="w-16 h-16 rounded-2xl bg-red-500/20 text-red-400 border border-red-500/30 flex items-center justify-center shadow-[0_0_16px_rgba(239,68,68,0.4)]">
+        <div className="w-16 h-16 rounded-2xl bg-red-500/20 text-red-400 border border-red-500/30 flex items-center justify-center shadow-[0_0_3px_rgba(239,68,68,0.35)]">
           <Hourglass className="w-8 h-8 text-red-400 animate-pulse" />
         </div>
         <h3 className="text-xl font-black text-white uppercase tracking-wider">{t('liveScoresTitle') || 'Live Punteggi'}</h3>
@@ -546,7 +546,7 @@ export const SettingModule: React.FC<SettingModuleProps> = ({
               }}
               className={`py-3 px-4 rounded-xl border text-xs font-black uppercase tracking-wider transition-all cursor-pointer ${
                 currentLang === lang.code
-                  ? 'bg-cyan-500/20 border-cyan-500/50 text-cyan-300 shadow-[0_0_12px_rgba(6,182,212,0.3)]'
+                  ? 'bg-cyan-500/20 border-cyan-500/50 text-cyan-300 shadow-[0_0_3px_rgba(6,182,212,0.25)]'
                   : 'bg-[#0e0e12] border-[#282834] text-zinc-400 hover:border-zinc-500 hover:text-white'
               }`}
             >
@@ -576,7 +576,7 @@ export const SettingModule: React.FC<SettingModuleProps> = ({
                 if (audioActive) sounds.playClick();
                 onToggleAudio();
               }}
-              className={`w-12 h-6 flex items-center rounded-full p-1 transition-colors cursor-pointer ${audioActive ? 'bg-amber-500 shadow-[0_0_10px_rgba(245,158,11,0.6)]' : 'bg-zinc-700'}`}
+              className={`w-12 h-6 flex items-center rounded-full p-1 transition-colors cursor-pointer ${audioActive ? 'bg-amber-500 shadow-[0_0_3px_rgba(245,158,11,0.4)]' : 'bg-zinc-700'}`}
             >
               <div className={`bg-white w-4 h-4 rounded-full shadow-md transform transition-transform ${audioActive ? 'translate-x-6' : 'translate-x-0'}`} />
             </button>
@@ -602,7 +602,7 @@ export const SettingModule: React.FC<SettingModuleProps> = ({
                 if (audioActive) sounds.playClick();
                 onToggleMusic();
               }}
-              className={`w-12 h-6 flex items-center rounded-full p-1 transition-colors cursor-pointer ${musicActive ? 'bg-purple-600 shadow-[0_0_10px_rgba(168,85,247,0.6)]' : 'bg-zinc-700'}`}
+              className={`w-12 h-6 flex items-center rounded-full p-1 transition-colors cursor-pointer ${musicActive ? 'bg-purple-600 shadow-[0_0_3px_rgba(168,85,247,0.4)]' : 'bg-zinc-700'}`}
             >
               <div className={`bg-white w-4 h-4 rounded-full shadow-md transform transition-transform ${musicActive ? 'translate-x-6' : 'translate-x-0'}`} />
             </button>
@@ -628,7 +628,7 @@ export const SettingModule: React.FC<SettingModuleProps> = ({
                 if (audioActive) sounds.playClick();
                 setAlertActive(!alertActive);
               }}
-              className={`w-12 h-6 flex items-center rounded-full p-1 transition-colors cursor-pointer ${alertActive ? 'bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.6)]' : 'bg-zinc-700'}`}
+              className={`w-12 h-6 flex items-center rounded-full p-1 transition-colors cursor-pointer ${alertActive ? 'bg-emerald-500 shadow-[0_0_3px_rgba(16,185,129,0.4)]' : 'bg-zinc-700'}`}
             >
               <div className={`bg-white w-4 h-4 rounded-full shadow-md transform transition-transform ${alertActive ? 'translate-x-6' : 'translate-x-0'}`} />
             </button>
@@ -689,7 +689,7 @@ export const SettingModule: React.FC<SettingModuleProps> = ({
           <Trash2 className="h-4 w-4" />
           <span>{t('deleteAccountButton') || 'Elimina Account'}</span>
         </button>
-      {deleteModalOpen && (<div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4"><form onSubmit={handleConfirmDeleteAccount} className="bg-[#16161a] border border-red-500/40 rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl"><h3 className="text-lg font-black text-red-400 uppercase">Conferma Eliminazione</h3><p className="text-xs text-zinc-300">Verranno eliminati solo i <strong>dati locali e la sessione dell'app</strong> per <strong>{accountName || 'questo account'}</strong> (non tocca il tuo account Sorare).</p><input type="text" value={deleteConfirmWord} onChange={(e) => { setDeleteConfirmWord(e.target.value); setDeleteError(''); }} placeholder="Digita ELIMINA" className="w-full bg-[#101014] border border-[#2c2c38] rounded-xl px-3.5 py-2.5 text-sm font-bold text-white uppercase outline-none" />{deleteError && <div className="bg-red-500/10 border border-red-500/30 text-red-300 text-xs font-bold px-3.5 py-2.5 rounded-xl">{deleteError}</div>}<div className="flex justify-end space-x-3 pt-2"><button type="button" onClick={closeDeleteModal} className="px-4 py-2.5 rounded-xl text-xs font-bold text-zinc-300 bg-[#22222b] cursor-pointer">Annulla</button><button type="submit" disabled={!canConfirmDelete} className="px-5 py-2.5 rounded-xl text-xs font-black uppercase text-white bg-red-600 disabled:opacity-40 cursor-pointer">Elimina</button></div></form></div>)}
+      {deleteModalOpen && (<div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4"><form onSubmit={handleConfirmDeleteAccount} className="bg-[#16161a] border border-red-500/40 rounded-2xl max-w-md w-full p-6 space-y-4 shadow-sm"><h3 className="text-lg font-black text-red-400 uppercase">Conferma Eliminazione</h3><p className="text-xs text-zinc-300">Verranno eliminati solo i <strong>dati locali e la sessione dell'app</strong> per <strong>{accountName || 'questo account'}</strong> (non tocca il tuo account Sorare).</p><input type="text" value={deleteConfirmWord} onChange={(e) => { setDeleteConfirmWord(e.target.value); setDeleteError(''); }} placeholder="Digita ELIMINA" className="w-full bg-[#101014] border border-[#2c2c38] rounded-xl px-3.5 py-2.5 text-sm font-bold text-white uppercase outline-none" />{deleteError && <div className="bg-red-500/10 border border-red-500/30 text-red-300 text-xs font-bold px-3.5 py-2.5 rounded-xl">{deleteError}</div>}<div className="flex justify-end space-x-3 pt-2"><button type="button" onClick={closeDeleteModal} className="px-4 py-2.5 rounded-xl text-xs font-bold text-zinc-300 bg-[#22222b] cursor-pointer">Annulla</button><button type="submit" disabled={!canConfirmDelete} className="px-5 py-2.5 rounded-xl text-xs font-black uppercase text-white bg-red-600 disabled:opacity-40 cursor-pointer">Elimina</button></div></form></div>)}
       </div>
     </div>
   );
@@ -851,7 +851,7 @@ export const HomeModule: React.FC<{
         setIsCircleHovered(false);
         setIsTitleHovered(false);
       }}
-      className="flex flex-col items-center justify-center min-h-[88vh] relative px-4 pt-4 pb-4 select-none overflow-hidden w-full"
+      className="flex flex-col items-center justify-center min-h-[88vh] relative px-4 pt-4 pb-4 select-none w-full"
     >
       
      {/* CONTENITORE PRINCIPALE IN ALTO A SINISTRA */}
@@ -860,11 +860,11 @@ export const HomeModule: React.FC<{
   {/* Slogan inclinato */}
   <div className="transform -rotate-4">
     <h1 className="text-2xl sm:text-2xl font-black uppercase tracking-tighter italic text-white leading-none drop-shadow-[0_4px_12px_rgba(0,0,0,0.9)]">
-      <span className="text-white drop-shadow-[0_0_15px_rgba(255,255,255,0.7)]">
+      <span className="text-white drop-shadow-[0_0_4px_rgba(255,255,255,0.7)]">
         {t('sloganTop') || 'PREPARATI AL'}
       </span>
       <br />
-      <span className="bg-gradient-to-r from-indigo-300 via-purple-300 to-pink-400 bg-clip-text text-transparent text-xl sm:text-2xl tracking-normal drop-shadow-[0_0_15px_rgba(168,85,247,0.6)]">
+      <span className="bg-gradient-to-r from-indigo-300 via-purple-300 to-pink-400 bg-clip-text text-transparent text-xl sm:text-2xl tracking-normal drop-shadow-[0_0_4px_rgba(168,85,247,0.6)]">
         {t('sloganBottom') || 'DECOLLO SU'}
       </span>
     </h1>
@@ -874,7 +874,7 @@ export const HomeModule: React.FC<{
     href="https://sorare.com"
     target="_blank"
     rel="noopener noreferrer"
-    className="transition-transform duration-300 hover:scale-110 cursor-pointer drop-shadow-[0_0_15px_rgba(255,255,255,0.4)] shrink-0"
+    className="transition-transform duration-300 hover:scale-110 cursor-pointer drop-shadow-[0_0_4px_rgba(255,255,255,0.4)] shrink-0"
     title={t('goToSorare') || 'Vai al sito ufficiale di Sorare'}
     onMouseEnter={() => { if (audioActive) sounds.playHover(); }}
     onClick={() => { if (audioActive) sounds.playClick(); }}
@@ -898,7 +898,7 @@ export const HomeModule: React.FC<{
             if (audioActive) sounds.playClick();
             setActiveTab('MY_CLUB');
           }}
-          className="px-6 py-4 rounded-2xl bg-amber-600 hover:bg-amber-300 text-slate-150 font-black text-sm uppercase tracking-wider transition-all shadow-[0_0_25px_rgba(251,191,36,0.5)] border-2 border-amber-300 hover:scale-105 cursor-pointer flex items-center space-x-2.5"
+          className="px-6 py-4 rounded-2xl bg-amber-600 hover:bg-amber-300 text-slate-150 font-black text-sm uppercase tracking-wider transition-all shadow-[0_0_4px_rgba(251,191,36,0.3)] border-2 border-amber-300 hover:scale-105 cursor-pointer flex items-center space-x-2.5"
           title={t('goToMyClub') || 'Vai al tuo club'}
         >
           <ShieldCheck className="h-8 w-5" />
@@ -907,7 +907,7 @@ export const HomeModule: React.FC<{
       </div>
 
       {/* 1. BLOCCO SUPERIORE ESTREMO IN ALTO A DESTRA */}
-      <div className="absolute top-0 right-0 flex items-center space-x-2.5 z-30">
+      <div className="absolute top-0 right-0 flex items-center space-x-2.5 z-30 translate-y-[3mm]">
         
         {/* Pulsante LIVE Rosso */}
         <button
@@ -917,7 +917,7 @@ export const HomeModule: React.FC<{
             if (audioActive) sounds.playClick();
             setActiveTab('LIVE');
           }}
-          className="px-4 h-12 rounded-2xl flex items-center space-x-2 bg-red-600/90 hover:bg-red-600 text-white font-black text-xs uppercase tracking-wider transition-all shadow-[0_0_20px_rgba(239,68,68,0.5)] border-2 border-red-500 hover:border-red-400 cursor-pointer relative group"
+          className="px-4 h-12 rounded-2xl flex items-center space-x-2 bg-red-600/90 hover:bg-red-600 text-white font-black text-xs uppercase tracking-wider transition-all shadow-[0_0_4px_rgba(239,68,68,0.3)] border-2 border-red-500 hover:border-red-400 cursor-pointer relative group"
           title={t('liveScoresTitle') || 'Segui i punteggi in diretta'}
         >
           <span className="w-2.5 h-2.5 rounded-full bg-white shrink-0"></span>
@@ -931,7 +931,7 @@ export const HomeModule: React.FC<{
             onMouseEnter={() => { if (audioActive) sounds.playHover(); }}
             onClick={handleSyncClick}
             disabled={isSyncing}
-            className="w-12 h-12 rounded-2xl flex items-center justify-center transition-all shadow-2xl relative group bg-[#16161a] hover:bg-[#202028] border-2 border-zinc-700 hover:border-indigo-500 cursor-pointer disabled:opacity-55"
+            className="w-12 h-12 rounded-2xl flex items-center justify-center transition-all shadow-sm relative group bg-[#16161a] hover:bg-[#202028] border-2 border-zinc-700 hover:border-indigo-500 cursor-pointer disabled:opacity-55"
             title={t('syncAccount') || 'Sincronizza account'}
           >
             <RefreshCw className={`h-5 w-5 text-indigo-400 transition-transform ${isSyncing ? 'animate-spin' : 'group-hover:scale-110'}`} />
@@ -954,7 +954,7 @@ export const HomeModule: React.FC<{
                 setUserMenuOpen(!userMenuOpen);
               }}
               onMouseEnter={() => { if (audioActive) sounds.playHover(); }}
-              className="flex items-center space-x-2.5 bg-[#16161a] hover:bg-[#202028] border-2 border-[#2a2a32] hover:border-zinc-600 px-3 py-1.5 rounded-2xl shadow-xl cursor-pointer transition-all h-12"
+              className="flex items-center space-x-2.5 bg-[#16161a] hover:bg-[#202028] border-2 border-[#2a2a32] hover:border-zinc-600 px-3 py-1.5 rounded-2xl shadow-sm cursor-pointer transition-all h-12"
             >
               {/* Avatar ufficiale di Sorare identico al sito */}
               <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-indigo-600 to-purple-600 border border-indigo-400/40 flex items-center justify-center overflow-hidden shadow shrink-0">
@@ -1006,14 +1006,14 @@ export const HomeModule: React.FC<{
 
       {/* FEEDBACK VISIVO "VISTO VERDE" A FINE SINCRONIZZAZIONE (2 SECONDI) */}
       {showSyncSuccess && (
-        <div className="absolute top-16 right-2 bg-emerald-950/90 border border-emerald-500/60 px-5 py-2.5 rounded-2xl shadow-[0_0_20px_rgba(16,185,129,0.4)] flex items-center space-x-2.5 z-50 animate-bounce">
+        <div className="absolute top-16 right-2 bg-emerald-950/90 border border-emerald-500/60 px-5 py-2.5 rounded-2xl shadow-[0_0_4px_rgba(16,185,129,0.25)] flex items-center space-x-2.5 z-50 animate-bounce">
           <CheckCircle2 className="h-5 w-5 text-emerald-400" />
           <span className="text-xs font-black text-emerald-200 tracking-wide">{t('syncComplete') || 'Sincronizzazione completata'}</span>
         </div>
       )}
 
       {/* 2. SELETTORE LINGUA, PULSANTE AUDIO E PULSANTE MUSICA IN BASSO A SINISTRA */}
-      <div className="absolute bottom-0 left-0 z-30 flex items-center space-x-2">
+      <div className="absolute bottom-0 left-0 z-30 flex items-center space-x-2 -translate-y-[3mm]">
         {/* SELETTORE LINGUA CON BANDIERE VETTORIALI */}
         <div className="relative">
           <button
@@ -1023,26 +1023,26 @@ export const HomeModule: React.FC<{
               setLangMenuOpen(!langMenuOpen);
             }}
             onMouseEnter={() => { if (audioActive) sounds.playHover(); }}
-            className="h-12 px-3 rounded-2xl bg-[#16161a] hover:bg-[#202028] border-2 border-zinc-700 hover:border-indigo-500 flex items-center space-x-2 text-white font-bold text-sm shadow-xl cursor-pointer transition-all"
+            className="h-12 px-3 rounded-2xl bg-[#16161a] hover:bg-[#202028] border-2 border-zinc-700 hover:border-indigo-500 flex items-center space-x-2 text-white font-bold text-sm shadow-none cursor-pointer transition-all"
             title={t('changeLanguage') || 'Cambia Lingua'}
           >
             <img 
               src={`https://flagcdn.com/w40/${activeLang === 'EN' ? 'gb' : activeLang.toLowerCase()}.png`} 
               alt={activeLang} 
-              className="w-6 h-4 object-cover rounded shadow-sm" 
+              className="w-6 h-4 object-cover rounded shadow-none" 
             />
             <span className="text-xs uppercase font-black">{activeLang}</span>
             <ChevronDown className={`h-3.5 w-3.5 text-zinc-400 transition-transform ${langMenuOpen ? 'rotate-180' : ''}`} />
           </button>
 
           {langMenuOpen && (
-            <div className="absolute left-0 bottom-full mb-2 w-40 bg-[#16161a] border border-[#2a2a32] rounded-2xl p-1.5 shadow-2xl z-50 space-y-1">
+            <div className="absolute left-0 bottom-full mb-2 w-40 bg-[#16161a] border border-[#2a2a32] rounded-2xl p-1.5 shadow-none z-50 space-y-1">
               <button
                 type="button"
                 onClick={() => { handleLangChange('IT'); if(audioActive) sounds.playClick(); }}
                 className={`w-full flex items-center space-x-3 px-3 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${activeLang === 'IT' ? 'bg-indigo-600 text-white' : 'text-zinc-300 hover:bg-[#202028]'}`}
               >
-                <img src="https://flagcdn.com/w40/it.png" alt="IT" className="w-5 h-3.5 object-cover rounded shadow-sm" />
+                <img src="https://flagcdn.com/w40/it.png" alt="IT" className="w-5 h-3.5 object-cover rounded shadow-none" />
                 <span>Italiano</span>
               </button>
               <button
@@ -1050,7 +1050,7 @@ export const HomeModule: React.FC<{
                 onClick={() => { handleLangChange('EN'); if(audioActive) sounds.playClick(); }}
                 className={`w-full flex items-center space-x-3 px-3 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${activeLang === 'EN' ? 'bg-indigo-600 text-white' : 'text-zinc-300 hover:bg-[#202028]'}`}
               >
-                <img src="https://flagcdn.com/w40/gb.png" alt="EN" className="w-5 h-3.5 object-cover rounded shadow-sm" />
+                <img src="https://flagcdn.com/w40/gb.png" alt="EN" className="w-5 h-3.5 object-cover rounded shadow-none" />
                 <span>English</span>
               </button>
               <button
@@ -1058,7 +1058,7 @@ export const HomeModule: React.FC<{
                 onClick={() => { handleLangChange('FR'); if(audioActive) sounds.playClick(); }}
                 className={`w-full flex items-center space-x-3 px-3 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${activeLang === 'FR' ? 'bg-indigo-600 text-white' : 'text-zinc-300 hover:bg-[#202028]'}`}
               >
-                <img src="https://flagcdn.com/w40/fr.png" alt="FR" className="w-5 h-3.5 object-cover rounded shadow-sm" />
+                <img src="https://flagcdn.com/w40/fr.png" alt="FR" className="w-5 h-3.5 object-cover rounded shadow-none" />
                 <span>Français</span>
               </button>
               <button
@@ -1066,7 +1066,7 @@ export const HomeModule: React.FC<{
                 onClick={() => { handleLangChange('ES'); if(audioActive) sounds.playClick(); }}
                 className={`w-full flex items-center space-x-3 px-3 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${activeLang === 'ES' ? 'bg-indigo-600 text-white' : 'text-zinc-300 hover:bg-[#202028]'}`}
               >
-                <img src="https://flagcdn.com/w40/es.png" alt="ES" className="w-5 h-3.5 object-cover rounded shadow-sm" />
+                <img src="https://flagcdn.com/w40/es.png" alt="ES" className="w-5 h-3.5 object-cover rounded shadow-none" />
                 <span>Español</span>
               </button>
             </div>
@@ -1078,9 +1078,9 @@ export const HomeModule: React.FC<{
           type="button"
           onMouseEnter={() => { if (audioActive) sounds.playHover(); }}
           onClick={handleAudioToggle}
-          className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all shadow-2xl cursor-pointer border-2 ${
+          className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all shadow-none cursor-pointer border-2 ${
             audioActive 
-              ? 'bg-[#16161a] hover:bg-[#202028] border-amber-500/50 text-amber-400 shadow-[0_0_15px_rgba(245,158,11,0.25)]' 
+              ? 'bg-[#16161a] hover:bg-[#202028] border-amber-500/50 text-amber-400 shadow-none' 
               : 'bg-[#16161a] hover:bg-[#202028] border-zinc-800 text-zinc-500 hover:text-zinc-300'
           }`}
           title={audioActive ? (t('disableAudio') || 'Disattiva Audio') : (t('enableAudio') || 'Attiva Audio')}
@@ -1093,9 +1093,9 @@ export const HomeModule: React.FC<{
           type="button"
           onMouseEnter={() => { if (audioActive) sounds.playHover(); }}
           onClick={handleMusicToggle}
-          className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all shadow-2xl cursor-pointer border-2 ${
+          className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all shadow-none cursor-pointer border-2 ${
             musicActive 
-              ? 'bg-[#16161a] hover:bg-[#202028] border-purple-500/60 text-purple-400 shadow-[0_0_15px_rgba(168,85,247,0.3)]' 
+              ? 'bg-[#16161a] hover:bg-[#202028] border-purple-500/60 text-purple-400 shadow-none' 
               : 'bg-[#16161a] hover:bg-[#202028] border-zinc-800 text-zinc-500 hover:text-zinc-300'
           }`}
           title={musicActive ? (t('disableMusic') || 'Disattiva Musica') : (t('enableMusic') || 'Attiva Musica')}
@@ -1637,7 +1637,7 @@ const SetModule: React.FC<{
       </div>
 
       <div className="bg-[#16161a] border border-[#2a2a32] p-16 rounded-2xl flex flex-col items-center justify-center text-center shadow-md space-y-3">
-        <div className="w-16 h-16 rounded-2xl bg-white/10 text-white border border-white/20 flex items-center justify-center text-2xl font-black shadow-[0_0_16px_rgba(255,255,255,0.3)]">
+        <div className="w-16 h-16 rounded-2xl bg-white/10 text-white border border-white/20 flex items-center justify-center text-2xl font-black shadow-[0_0_3px_rgba(255,255,255,0.25)]">
           ⏳
         </div>
         <h3 className="text-xl font-black text-white uppercase tracking-wider">{t('setCardsManagement') || 'Gestione Carte Set'}</h3>
@@ -1944,7 +1944,7 @@ const DailyMissionsModule: React.FC<DailyMissionsModuleProps> = ({
 
       {activeSubTab === 'COLLECTION' ? (
         <div className="bg-[#16161a] border border-[#2a2a32] p-16 rounded-2xl flex flex-col items-center justify-center text-center shadow-md space-y-3">
-          <div className="w-16 h-16 rounded-2xl bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 flex items-center justify-center text-2xl font-black shadow-[0_0_16px_rgba(99,102,241,0.5)]">
+          <div className="w-16 h-16 rounded-2xl bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 flex items-center justify-center text-2xl font-black shadow-[0_0_3px_rgba(99,102,241,0.4)]">
             ⏳
           </div>
           <h3 className="text-xl font-black text-white uppercase tracking-wider">{t('collectionMissionsTab')}</h3>
@@ -2184,10 +2184,10 @@ const LineupsModule: React.FC<{
             if (audioActive) sounds.playClick();
             setActiveTab('CALENDAR');
           }}
-          className="bg-[#16161a] hover:bg-[#202028] border-2 border-[#00ff66] px-5 py-3 rounded-2xl flex items-center space-x-3 transition-all group shadow-2xl cursor-pointer"
+          className="bg-[#16161a] hover:bg-[#202028] border-2 border-[#00ff66] px-5 py-3 rounded-2xl flex items-center space-x-3 transition-all group shadow-sm cursor-pointer"
           style={{ filter: 'drop-shadow(0 0 16px rgba(0, 255, 102, 0.6))' }}
         >
-          <div className="w-9 h-9 rounded-full bg-[#00ff66]/20 text-[#00ff66] border border-[#00ff66]/40 flex items-center justify-center shrink-0 shadow-[0_0_12px_rgba(0,255,102,0.8)]">
+          <div className="w-9 h-9 rounded-full bg-[#00ff66]/20 text-[#00ff66] border border-[#00ff66]/40 flex items-center justify-center shrink-0 shadow-[0_0_5px_rgba(0,255,102,0.65)]">
             <Calendar className="h-4 w-4 stroke-[2.5]" />
           </div>
           <div className="text-left">
@@ -2573,7 +2573,7 @@ const SellingModule: React.FC<SellingModuleProps> = ({ cards, token, audioActive
   };
 
   return (
-    <div className="space-y-6 w-full">
+    <div className="space-y-6 w-full px-1">
       <div className="flex justify-end items-center mb-2">
         <NotificationBell audioActive={audioActive} notifications={notifications} onClearNotifications={onClearNotifications} currentLang={currentLang} />
       </div>
@@ -2618,7 +2618,7 @@ const SellingModule: React.FC<SellingModuleProps> = ({ cards, token, audioActive
                 setAutoSellActive(false);
               }
             }}
-            className={`w-14 h-8 flex items-center rounded-full p-1 transition-colors cursor-pointer ${autoSellActive ? 'bg-red-600 shadow-[0_0_12px_rgba(239,68,68,0.7)]' : 'bg-zinc-700'}`}
+            className={`w-14 h-8 flex items-center rounded-full p-1 transition-colors cursor-pointer ${autoSellActive ? 'bg-red-600 shadow-[0_0_3px_rgba(239,68,68,0.45)]' : 'bg-zinc-700'}`}
           >
             <div className={`bg-white w-6 h-6 rounded-full shadow-md transform transition-transform ${autoSellActive ? 'translate-x-6' : 'translate-x-0'}`} />
           </button>
@@ -2693,7 +2693,7 @@ const SellingModule: React.FC<SellingModuleProps> = ({ cards, token, audioActive
               onClick={() => toggleSelectCard(String(card.id))}
               className={`bg-[#16161a] border p-4 rounded-xl flex items-center space-x-4 shadow-sm cursor-pointer transition-all ${
                 selectedCardIds.includes(String(card.id))
-                  ? 'border-[#ff003c] ring-1 ring-[#ff003c]/60'
+                  ? 'border-[#ff003c] ring-1 ring-[#ff003c]/40'
                   : 'border-[#2a2a32] hover:border-[#3e3e4c]'
               }`}
             >
@@ -2748,7 +2748,7 @@ const CraftModule: React.FC<{
       </div>
 
       <div className="bg-[#16161a] border border-[#2a2a32] p-16 rounded-2xl flex flex-col items-center justify-center text-center shadow-md space-y-3">
-        <div className="w-16 h-16 rounded-2xl bg-[#d000ff]/20 text-[#d000ff] border border-[#d000ff]/30 flex items-center justify-center text-2xl font-black shadow-[0_0_16px_rgba(208,0,255,0.4)]">
+        <div className="w-16 h-16 rounded-2xl bg-[#d000ff]/20 text-[#d000ff] border border-[#d000ff]/30 flex items-center justify-center text-2xl font-black shadow-[0_0_3px_rgba(208,0,255,0.35)]">
           ⏳
         </div>
         <h3 className="text-xl font-black text-white uppercase tracking-wider">{t('crafting')}</h3>
@@ -3500,7 +3500,7 @@ export default function App() {
               }).map((x: any) => x.card);
 
               return (
-                <div className="space-y-6 max-w-7xl mx-auto w-full">
+                <div className="space-y-6 max-w-[1440px] mx-auto w-full px-1">
                   <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-[#16161a] border border-[#2a2a32] p-6 rounded-2xl shadow-md gap-4">
                     <div>
                       <h2 className="text-2xl font-bold text-white">{translations[currentLang]?.myClubTitle || 'Il Mio Club - Carte Pro'}</h2>
