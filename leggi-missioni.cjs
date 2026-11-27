@@ -1,164 +1,140 @@
-const puppeteer = require('puppeteer');
+﻿const puppeteer = require('puppeteer-core');
 const fs = require('fs');
+const path = require('path');
 
-async function estraiMissioni() {
-  const userDataDir =
-    'C:/Users/fisio/OneDrive/Desktop/sorare-sessione';
+const DIR = 'C:/Users/fisio/OneDrive/Desktop/sorare-sessione';
+const URL = 'https://sorare.com/it/football/play/missions/play/limited';
+
+async function estraiMissioni(options) {
+  const o = options || {};
+  const closeAfter = o.closeAfter !== undefined ? Boolean(o.closeAfter) : true;
+  const userDataDir = o.userDataDir || DIR;
+  const targetUrl = o.url || URL;
+
+  const candidates = [
+    'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe',
+    'C:/Program Files/Microsoft/Edge/Application/msedge.exe',
+    'C:/Program Files/Google/Chrome/Application/chrome.exe',
+    'C:/Program Files (x86)/Google/Chrome/Application/chrome.exe'
+  ];
+  const execPath = o.executablePath || candidates.find((p) => fs.existsSync(p));
 
   let browser;
-
   try {
-    console.log('Apro Sorare...');
-
+    console.log('Apro Sorare per le missioni giornaliere...');
     browser = await puppeteer.launch({
+      ...(execPath ? { executablePath: execPath } : {}),
       headless: false,
       userDataDir,
-      args: [
-        '--no-sandbox',
-        '--disable-setuid-sandbox',
-        '--start-maximized'
-      ],
+      args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage', '--start-maximized'],
       defaultViewport: null
     });
 
     const pages = await browser.pages();
-    const page = pages[0] || await browser.newPage();
+    const page = pages[0] || (await browser.newPage());
+    await page.goto(targetUrl, { waitUntil: 'domcontentloaded', timeout: 60000 });
 
-    await page.goto(
-      'https://sorare.com/it/football/play/missions/play/limited',
-      {
-        waitUntil: 'domcontentloaded',
-        timeout: 60000
+    const deadline = Date.now() + 25000;
+    let bodyText = '';
+    let noMissions = false;
+    let hasGiornaliero = false;
+
+    while (Date.now() < deadline) {
+      if (page.isClosed()) {
+        throw new Error('Target page closed before content loaded');
       }
-    );
-
-    console.log('Attendo le missioni giornaliere...');
-
-    await page.waitForFunction(
-      () => document.body &&
-        document.body.innerText.includes('GIORNALIERO'),
-      { timeout: 60000 }
-    );
-
-    await new Promise(resolve => setTimeout(resolve, 3000));
-
-    console.log('Estraggo le missioni disponibili...');
-
-    const risultato = await page.evaluate(() => {
-
-      // Elenco completo dei possibili titoli di missioni giornaliere note
-      const titoli = [
-        'Decisive Picker',
-        'Intercetto - Tutte le partite',
-        'Assist - Tutte le partite',
-        'Goal - Tutte le partite'
-      ];
-
-      const contenitori = [
-        ...document.querySelectorAll('div')
-      ].filter(el =>
-        el.classList.contains('eAxlTh') &&
-        el.classList.contains('py-2') &&
-        el.innerText.includes('GIORNALIERO')
-      ).sort((a, b) =>
-        a.innerText.length - b.innerText.length
-      );
-
-      const contenitore = contenitori[0];
-
-      if (!contenitore) {
+      const state = await page.evaluate(() => {
+        const txt = document.body ? (document.body.innerText || '') : '';
         return {
-          errore: 'Contenitore giornaliero non trovato',
-          missioni: []
+          txt,
+          hasG: /\bgiornaliero\b/i.test(txt),
+          noM: /nessuna missione disponibile/i.test(txt)
         };
-      }
-
-      const testo = contenitore.innerText;
-      const trovate = [];
-
-      // Cerca quali titoli sono effettivamente presenti nel testo della pagina oggi
-      titoli.forEach(titolo => {
-        const posizione = testo.indexOf(titolo);
-        if (posizione !== -1) {
-          trovate.unshift({ titolo, posizione });
-        }
       });
+      bodyText = state.txt;
+      hasGiornaliero = state.hasG;
+      noMissions = state.noM;
 
-      // Ordina le missioni trovate in base alla loro posizione reale nella pagina
-      trovate.sort((a, b) => a.posizione - b.posizione);
-
-      const missioniFinali = [];
-
-      for (let i = 0; i < trovate.length; i++) {
-        const corrente = trovate[i];
-        const inizio = corrente.posizione + corrente.titolo.length;
-        let fine = testo.length;
-
-        if (i + 1 < trovate.length) {
-          fine = trovate[i + 1].posizione;
-        }
-
-        let descrizione = testo
-          .slice(inizio, fine)
-          .trim();
-
-        // Elimina eventuali sezioni successive alle missioni
-        descrizione = descrizione
-          .split(/\nSERIE\b/)[0]
-          .trim();
-
-        // Elimina i numeri isolati dei contatori
-        descrizione = descrizione
-          .replace(/\n[1-3](?=\n|$)/g, '')
-          .trim();
-
-        missioniFinali.push({
-          titolo: corrente.titolo,
-          descrizione
-        });
+      if (hasGiornaliero || (noMissions && txtHasLoaded(bodyText))) {
+        break;
       }
-
-      return {
-        errore: null,
-        missioni: missioniFinali
-      };
-    });
-
-    if (risultato.errore) {
-      throw new Error(risultato.errore);
+      await new Promise((r) => setTimeout(r, 1000));
     }
 
-    const missioni = risultato.missioni;
+    function txtHasLoaded(t) {
+      return Boolean(t && t.trim().length > 40);
+    }
 
-    const output = {
+    let missioni = [];
+    if (hasGiornaliero && !page.isClosed()) {
+      const res = await page.evaluate(() => {
+        const box = Array.from(document.querySelectorAll('div'))
+          .filter((el) => el.classList && el.classList.contains('eAxlTh') && el.classList.contains('py-2') && /\bGIORNALIERO\b/i.test(el.innerText || ''))
+          .sort((a, b) => (a.innerText || '').length - (b.innerText || '').length)[0];
+        const target = box || document.body;
+        if (!target) return [];
+
+        const rawDaily = (target.innerText || '').split(/\bGIORNALIERO\b/i).slice(1).join('\n').split(/\nSERIE\b/i)[0];
+        const lines = rawDaily
+          .split(/\r?\n/)
+          .map((l) => l.trim())
+          .filter((l) => l && !/^[1-3]$/.test(l) && !/^[▲▼]$/.test(l) && !/^GIOCA$/i.test(l) && !/^Ottieni premi/i.test(l));
+
+        const out = [];
+        let current = null;
+        for (let i = 0; i < lines.length; i++) {
+          const line = lines[i];
+          const nextLine = lines[i + 1] || '';
+          const looksLikeTitle =
+            (!current && i === 0) ||
+            (current &&
+              current.descrizione &&
+              line.length <= 90 &&
+              !/[.!?]$/.test(line) &&
+              (nextLine.length > line.length || /scheda|giocatore|partite|vinci|guadagna|earn|select|pick/i.test(nextLine)));
+
+          if (looksLikeTitle) {
+            if (current && current.titolo) {
+              out.push({ titolo: current.titolo, descrizione: current.descrizione.trim() });
+            }
+            current = { titolo: line, descrizione: '' };
+          } else if (current) {
+            current.descrizione = current.descrizione ? `${current.descrizione} ${line}` : line;
+          }
+        }
+        if (current && current.titolo) {
+          out.push({ titolo: current.titolo, descrizione: current.descrizione.trim() });
+        }
+        return out;
+      });
+      missioni = Array.isArray(res) ? res : [];
+    }
+
+    const payload = {
       data: new Date().toISOString(),
       totale: missioni.length,
+      stato: missioni.length > 0 ? 'ok' : (noMissions ? 'nessuna_missione_disponibile' : 'non_trovate'),
       missioni
     };
 
-    fs.writeFileSync(
-      'missioni-oggi.json',
-      JSON.stringify(output, null, 2),
-      'utf8'
-    );
-
-    console.log('\n========== MISSIONI GIORNALIERE ==========\n');
-
-    missioni.forEach((m, index) => {
-      console.log(`${index + 1}. ${m.titolo}`);
-      console.log(m.descrizione);
-      console.log('');
-    });
-
-    console.log('==========================================');
-    console.log(`TOTALE MISSIONI TROVATE: ${missioni.length}`);
-    console.log('JSON aggiornato: missioni-oggi.json');
-    console.log('ESTRAZIONE COMPLETATA CORRETTAMENTE!');
-    console.log('Browser lasciato aperto.');
-
-  } catch (error) {
-    console.error('\nERRORE:', error.message);
+    const outPath = path.resolve(process.cwd(), 'missioni-oggi.json');
+    fs.writeFileSync(outPath, JSON.stringify(payload, null, 2), 'utf8');
+    console.log('JSON aggiornato: missioni-oggi.json (' + missioni.length + ' missioni, stato=' + payload.stato + ')');
+    return payload;
+  } finally {
+    if (closeAfter && browser) {
+      await browser.close().catch(() => {});
+    }
   }
 }
 
-estraiMissioni();
+if (require.main === module) {
+  estraiMissioni({ closeAfter: true })
+    .then(() => process.exit(0))
+    .catch((err) => {
+      console.error('ERRORE:', err && err.message ? err.message : err);
+      process.exitCode = 1;
+    });
+}
+
+module.exports = { estraiMissioni };

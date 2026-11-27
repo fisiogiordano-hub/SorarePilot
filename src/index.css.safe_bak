@@ -1,0 +1,71 @@
+@import "tailwindcss";
+
+body {
+  margin: 0;
+  background-color: #09090b;
+  color: #f4f4f5;
+  font-family: system-ui, -apple-system, sans-serif;
+  cursor: url('/red-cursor.png') 0 0, auto !important;
+}
+
+/* ==========================================
+   FORZA IL CURSORE PERSONALIZZATO SU TUTTO
+   ========================================== */
+html, body,
+*, *::before, *::after,
+*:hover, *:active, *:focus, *:focus-visible,
+::-webkit-scrollbar, ::-webkit-scrollbar-track, ::-webkit-scrollbar-thumb, ::-webkit-scrollbar-corner,
+a, button, input, select, textarea, [role="button"] {
+  cursor: url('/red-cursor.png') 0 0, auto !important;
+}
+
+/* Scrollbar grigia visibile e larga */
+html,
+body,
+main,
+aside,
+.custom-scrollbar,
+* {
+  scrollbar-width: auto !important;
+  scrollbar-color: #9ca3af #18181b !important;
+}
+
+html::-webkit-scrollbar,
+body::-webkit-scrollbar,
+main::-webkit-scrollbar,
+aside::-webkit-scrollbar,
+.custom-scrollbar::-webkit-scrollbar,
+*::-webkit-scrollbar {
+  width: 12px !important;
+  height: 12px !important;
+}
+
+html::-webkit-scrollbar-track,
+body::-webkit-scrollbar-track,
+main::-webkit-scrollbar-track,
+aside::-webkit-scrollbar-track,
+.custom-scrollbar::-webkit-scrollbar-track,
+*::-webkit-scrollbar-track {
+  background: #18181b !important;
+}
+
+html::-webkit-scrollbar-thumb,
+body::-webkit-scrollbar-thumb,
+main::-webkit-scrollbar-thumb,
+aside::-webkit-scrollbar-thumb,
+.custom-scrollbar::-webkit-scrollbar-thumb,
+*::-webkit-scrollbar-thumb {
+  background-color: #9ca3af !important;
+  border-radius: 9999px !important;
+  border: 2px solid #18181b !important;
+  min-height: 80px !important;
+}
+
+html::-webkit-scrollbar-thumb:hover,
+body::-webkit-scrollbar-thumb:hover,
+main::-webkit-scrollbar-thumb:hover,
+aside::-webkit-scrollbar-thumb:hover,
+.custom-scrollbar::-webkit-scrollbar-thumb:hover,
+*::-webkit-scrollbar-thumb:hover {
+  background-color: #d1d5db !important;
+}

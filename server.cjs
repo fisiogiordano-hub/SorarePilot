@@ -1,4 +1,4 @@
-require('dotenv').config();
+﻿require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const bcrypt = require('bcryptjs');
@@ -20,7 +20,7 @@ const SORARE_CLIENT_ID = process.env.SORARE_CLIENT_ID || '';
 const SORARE_CLIENT_SECRET = process.env.SORARE_CLIENT_SECRET || '';
 const SORARE_REDIRECT_URI = process.env.SORARE_REDIRECT_URI || '';
 
-// Parametri di scalabilità e cache configurabili via env
+// Parametri di scalabilitÃ  e cache configurabili via env
 const SORARE_MAX_CONCURRENCY = Math.max(1, Number(process.env.SORARE_MAX_CONCURRENCY) || 6);
 const SORARE_REQUEST_TIMEOUT_MS = Math.max(2000, Number(process.env.SORARE_REQUEST_TIMEOUT_MS) || 12000);
 const USER_PROFILE_CACHE_TTL_MS = Math.max(5000, Number(process.env.USER_PROFILE_CACHE_TTL_MS) || 30000);
@@ -475,7 +475,7 @@ async function loadSalesTrackerAsync() {
   try {
     await fsp.access(SALES_TRACKER_FILE);
     const raw = await fsp.readFile(SALES_TRACKER_FILE, 'utf8');
-    const parsed = JSON.parse(raw);
+    const parsed = JSON.parse(raw.replace(/^\uFEFF/, ''));
     cachedTrackerData = parsed && typeof parsed === 'object' && parsed.users
       ? parsed
       : { users: {} };
@@ -808,7 +808,7 @@ async function loadFormattedMissionsCached() {
     if (again) return again;
 
     const fileData = await fsp.readFile(MISSIONS_FILE, 'utf8');
-    const parsedData = JSON.parse(fileData);
+    const parsedData = JSON.parse(fileData.replace(/^\uFEFF/, ''));
 
     if (!Array.isArray(parsedData.missioni)) {
       const err = new Error('Formato missioni-oggi.json non valido.');
@@ -884,31 +884,44 @@ async function loadFormattedMissionsCached() {
   });
 }
 
+async function syncDailyMissionsFromSorare(_forceRefresh){
+  responseCache.deleteByPrefix('missions:');
+  try {
+    const raw = await fsp.readFile(MISSIONS_FILE, 'utf8');
+    const existing = JSON.parse(raw.replace(/^\uFEFF/, ''));
+    if (existing && Array.isArray(existing.missioni)) {
+      return existing;
+    }
+  } catch {
+    // Se il file non esiste ancora o non e' valido, restituiamo stato vuoto senza usare Puppeteer
+  }
+  return { data: new Date().toISOString(), totale: 0, missioni: [] };
+}
+app.post('/api/extension/missions', async (req, res) => {
+  try {
+    const body = req.body || {};
+    const rawList = Array.isArray(body.missioni) ? body.missioni : (Array.isArray(body.missions) ? body.missions : []);
+    const normalized = rawList.map(m => ({ titolo: String((m && (m.titolo || m.title)) || '').trim(), descrizione: String((m && (m.descrizione || m.description)) || '').trim() })).filter(m => m.titolo);
+    if (normalized.length === 0) return res.status(400).json({ success: false, error: 'Nessuna missione valida ricevuta dall estensione.' });
+    const payloadFile = { data: new Date().toISOString(), totale: normalized.length, missioni: normalized };
+    await fsp.writeFile(MISSIONS_FILE, JSON.stringify(payloadFile, null, 2), 'utf8');
+    responseCache.deleteByPrefix('missions:');
+    const formatted = await loadFormattedMissionsCached();
+    return res.json({ success: true, total: normalized.length, ...formatted });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
 app.post('/api/fetch-missions', async (req, res) => {
   try {
-    try {
-      await fsp.access(MISSIONS_FILE);
-    } catch {
-      return res.status(404).json({
-        success: false,
-        error: 'File missioni-oggi.json non trovato.'
-      });
-    }
-
+    const forceRefresh = Boolean(req.body && (req.body.forceRefresh || req.body.refresh));
+    await syncDailyMissionsFromSorare(forceRefresh);
     const payload = await loadFormattedMissionsCached();
     return res.json(payload);
   } catch (error) {
-    if (error.statusCode === 400) {
-      return res.status(400).json({
-        success: false,
-        error: error.message
-      });
-    }
-    console.error('❌ Errore recupero missioni:', error);
-    return res.status(500).json({
-      success: false,
-      error: 'Errore durante il recupero delle missioni: ' + error.message
-    });
+    if (error.statusCode === 400) return res.status(400).json({ success: false, error: error.message });
+    console.error('Errore recupero missioni:', error);
+    return res.status(500).json({ success: false, error: 'Errore durante il recupero delle missioni: ' + error.message });
   }
 });
 
@@ -1117,8 +1130,18 @@ const CARDS_QUERY_FALLBACK = `
 `;
 
 let preferredCardsQueryMode = 'full';
+let lastFallbackModeAt = 0;
+const FALLBACK_RECOVERY_MS = 120000;
 
 async function fetchUserCardsGraphQL(token, afterCursor) {
+  if (
+    preferredCardsQueryMode !== 'full' &&
+    lastFallbackModeAt > 0 &&
+    Date.now() - lastFallbackModeAt >= FALLBACK_RECOVERY_MS
+  ) {
+    preferredCardsQueryMode = 'full';
+    lastFallbackModeAt = 0;
+  }
   const scope = getUserScope(token);
   const cursorKey = afterCursor || 'first';
   const cacheKey = `cards:${scope}:${cursorKey}`;
@@ -1141,10 +1164,12 @@ async function fetchUserCardsGraphQL(token, afterCursor) {
         data = await runQuery(CARDS_QUERY_FULL);
       } catch (err) { console.error('[SorarePilot] CARDS_QUERY_FULL fallita:', err?.message || err);
         preferredCardsQueryMode = 'games';
+        lastFallbackModeAt = Date.now();
         try {
           data = await runQuery(CARDS_QUERY_WITH_GAMES);
         } catch (err2) { console.error('[SorarePilot] CARDS_QUERY_WITH_GAMES fallita:', err2?.message || err2);
           preferredCardsQueryMode = 'fallback';
+          lastFallbackModeAt = Date.now();
           data = await runQuery(CARDS_QUERY_FALLBACK);
         }
       }
@@ -1153,6 +1178,7 @@ async function fetchUserCardsGraphQL(token, afterCursor) {
         data = await runQuery(CARDS_QUERY_WITH_GAMES);
       } catch (err2) { console.error('[SorarePilot] CARDS_QUERY_WITH_GAMES fallita:', err2?.message || err2);
         preferredCardsQueryMode = 'fallback';
+          lastFallbackModeAt = Date.now();
         data = await runQuery(CARDS_QUERY_FALLBACK);
       }
     } else {
@@ -1269,7 +1295,8 @@ app.post('/api/user-cards', async (req, res) => {
     const cardsData = currentUser.cards;
     const cardNodes = cardsData?.nodes || [];
     const nextGwWindow = getNextGameWeekWindow();
-    const userKey = currentUser.slug || currentUser.id || currentUser.nickname || 'default';
+    const candidateKeys = [currentUser.id, currentUser.slug, currentUser.nickname, 'default'].filter(Boolean);
+    const userKey = currentUser.id || currentUser.slug || currentUser.nickname || 'default';
     const { cardIds: activeLineupCardIds, cardSlugs: activeLineupCardSlugs } = await fetchActiveLineupCardSets(token, userKey);
 
     const formattedCards = await withTrackerLock(async () => {
@@ -1318,7 +1345,19 @@ app.post('/api/user-cards', async (req, res) => {
         }
 
         const cardKey = card.id || card.slug;
-        const prevRecord = userTracker.cards[cardKey] || {
+        let existingFromAltKey = null;
+        if (!userTracker.cards[cardKey] && Array.isArray(trackerData?.users)) {
+          // no-op
+        }
+        if (!userTracker.cards[cardKey] && trackerData?.users && typeof trackerData.users === 'object') {
+          for (const [k, uObj] of Object.entries(trackerData.users)) {
+            if (k !== userKey && uObj?.cards?.[cardKey]) {
+              existingFromAltKey = uObj.cards[cardKey];
+              break;
+            }
+          }
+        }
+        const prevRecord = userTracker.cards[cardKey] || existingFromAltKey || {
           activeOfferId: null,
           returnedFromSale: false,
           returnedAt: null,
@@ -1687,7 +1726,7 @@ app.post('/api/submit-missions', async (req, res) => {
 
   if (invalidSubmission) {
     return res.status(400).json({
-      error: 'Una o più missioni contengono dati non validi.'
+      error: 'Una o piÃ¹ missioni contengono dati non validi.'
     });
   }
 
@@ -1815,12 +1854,12 @@ maintenanceTimer.unref();
 
 const server = app.listen(PORT, () => {
   console.log('======================================');
-  console.log('🚀 SERVER SORAREPILOT ATTIVO');
-  console.log(`🌐 Porta: ${PORT}`);
-  console.log(`📁 Missioni: ${MISSIONS_FILE}`);
-  console.log(`📁 Tracker vendite: ${SALES_TRACKER_FILE}`);
-  console.log(`📦 Frontend dist: ${DIST_DIR}`);
-  console.log(`⚡ Max concorrenza Sorare: ${SORARE_MAX_CONCURRENCY}`);
+  console.log('ðŸš€ SERVER SORAREPILOT ATTIVO');
+  console.log(`ðŸŒ Porta: ${PORT}`);
+  console.log(`ðŸ“ Missioni: ${MISSIONS_FILE}`);
+  console.log(`ðŸ“ Tracker vendite: ${SALES_TRACKER_FILE}`);
+  console.log(`ðŸ“¦ Frontend dist: ${DIST_DIR}`);
+  console.log(`âš¡ Max concorrenza Sorare: ${SORARE_MAX_CONCURRENCY}`);
   console.log('======================================');
 });
 
@@ -1835,3 +1874,4 @@ function gracefulShutdown(signal) {
 
 process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
 process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+

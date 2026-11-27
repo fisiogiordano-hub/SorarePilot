@@ -11,117 +11,67 @@ body {
 /* ==========================================
    FORZA IL CURSORE PERSONALIZZATO SU TUTTO
    ========================================== */
+:root,
+html,
+body,
+#root,
 *, *::before, *::after,
 *:hover, *:active, *:focus, *:focus-visible,
+::-webkit-scrollbar,
+::-webkit-scrollbar-track,
+::-webkit-scrollbar-thumb,
+::-webkit-scrollbar-corner,
 a, button, input, select, textarea, [role="button"] {
   cursor: url('/red-cursor.png') 0 0, auto !important;
 }
 
-/* ==========================================
-   BARRA DI SCORRIMENTO PERSONALIZZATA (APPARE SOLO DOVE NECESSARIO)
-   ========================================== */
-.custom-scrollbar::-webkit-scrollbar {
-  width: 8px;
+/* Scrollbar grigia visibile e larga */
+html,
+body,
+main,
+aside,
+.custom-scrollbar,
+* {
+  scrollbar-width: auto !important;
+  scrollbar-color: #9ca3af #18181b !important;
 }
 
-.custom-scrollbar::-webkit-scrollbar-track {
-  background: #121216;
-  border-radius: 8px;
+html::-webkit-scrollbar,
+body::-webkit-scrollbar,
+main::-webkit-scrollbar,
+aside::-webkit-scrollbar,
+.custom-scrollbar::-webkit-scrollbar,
+*::-webkit-scrollbar {
+  width: 12px !important;
+  height: 12px !important;
 }
 
-.custom-scrollbar::-webkit-scrollbar-thumb {
-  background: #2a2a32;
-  border-radius: 8px;
-  border: 2px solid #121216;
+html::-webkit-scrollbar-track,
+body::-webkit-scrollbar-track,
+main::-webkit-scrollbar-track,
+aside::-webkit-scrollbar-track,
+.custom-scrollbar::-webkit-scrollbar-track,
+*::-webkit-scrollbar-track {
+  background: #18181b !important;
 }
 
-.custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: #00bfff;
+html::-webkit-scrollbar-thumb,
+body::-webkit-scrollbar-thumb,
+main::-webkit-scrollbar-thumb,
+aside::-webkit-scrollbar-thumb,
+.custom-scrollbar::-webkit-scrollbar-thumb,
+*::-webkit-scrollbar-thumb {
+  background-color: #9ca3af !important;
+  border-radius: 9999px !important;
+  border: 2px solid #18181b !important;
+  min-height: 80px !important;
 }
 
-/* Supporto Firefox per scrollbar personalizzata */
-.custom-scrollbar {
-  scrollbar-width: thin;
-  scrollbar-color: #2a2a32 #121216;
-}
-
-/* Logo Top Gun rifinito, ravvicinato e proporzionato */
-.sorare-topgun-logo {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  position: relative;
-  margin: 2px 0 6px 0;
-  text-align: center;
-  width: 100%;
-}
-
-.logo-text {
-  font-size: 20px;
-  font-weight: 900;
-  color: #ffffff;
-  text-transform: uppercase;
-  letter-spacing: 1.5px;
-  z-index: 2;
-  padding: 0 10px;
-  background-color: #0a0a0c;
-  display: inline-block;
-}
-
-.wing-stripes {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  position: absolute;
-  top: 40%;
-  transform: translateY(-50%);
-  z-index: 1;
-  width: 48px;
-}
-
-.left-wings {
-  left: 0px;
-}
-
-.right-wings {
-  right: 0px;
-}
-
-.stripe {
-  height: 3px;
-  width: 100%;
-  transform: skewX(-30deg);
-}
-
-/* Dal basso verso l'alto: Bianco in basso -> Azzurro/lavanda al centro -> Blu profondo in alto */
-.stripe.cyan { background-color: #ffffff; }    /* Striscia in basso: Bianca */
-.stripe.blue { background-color: #818cf8; }    /* Striscia al centro: Azzurro/lavanda (da PILOT) */
-.stripe.dark-blue { background-color: #1d4ed8; } /* Striscia in alto: Blu profondo */
-
-.logo-bottom-bar {
-  width: 82%;
-  position: relative;
-  margin-top: 3px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.white-line {
-  height: 4px;
-  background-color: #ffffff;
-  width: 100%;
-  border-radius: 2px;
-}
-
-.logo-star {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  color: #ffffff;
-  font-size: 13px;
-  background-color: #0a0a0c;
-  padding: 0 4px;
-  line-height: 1;
+html::-webkit-scrollbar-thumb:hover,
+body::-webkit-scrollbar-thumb:hover,
+main::-webkit-scrollbar-thumb:hover,
+aside::-webkit-scrollbar-thumb:hover,
+.custom-scrollbar::-webkit-scrollbar-thumb:hover,
+*::-webkit-scrollbar-thumb:hover {
+  background-color: #d1d5db !important;
 }

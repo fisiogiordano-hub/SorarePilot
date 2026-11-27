@@ -1,68 +1,70 @@
-import React, { useEffect, useState } from "react";
-import { isExtensionReady, subscribeExtension, pauseQueue, resumeQueue, stopQueue, type QueueState, type ExtEvent } from "./extension-client";
+import { useEffect, useState } from "react";
+import { Puzzle, RefreshCw, Pause, Play, Square, ExternalLink, Download } from "lucide-react";
+import { isExtensionReady, requestQueueState, subscribeExtension, pauseQueue, resumeQueue, stopQueue } from "./extension-client";
+import type { QueueState } from "./extension-client";
 
-const EXTENSION_ZIP_URL = "/sorarepilot-extension.zip";
+const STORE_URL = (import.meta as { env?: Record<string, string> }).env?.VITE_EXTENSION_STORE_URL || "https://microsoftedge.microsoft.com/addons";
 
-export const ExtensionBar: React.FC = () => {
+export type SorareFlowKind = "missions" | "lineups" | "sales" | "home";
+
+interface ExtensionBarProps {
+  activeFlow?: SorareFlowKind;
+  showSorareGuide?: boolean;
+}
+
+function getSorareTargetUrl(flow: SorareFlowKind): { url: string; label: string } {
+  switch (flow) {
+    case "missions": return { url: "https://sorare.com/football/play", label: "Apri Missioni Sorare" };
+    case "lineups": return { url: "https://sorare.com/football/play", label: "Apri Formazioni Sorare" };
+    case "sales": return { url: "https://sorare.com/football/my-club/cards", label: "Apri Carte / Vendite Sorare" };
+    default: return { url: "https://sorare.com", label: "Apri Sorare" };
+  }
+}
+
+const emptyState: QueueState = { mode: "idle", flow: null, currentItem: null, remainingCount: 0, completedCount: 0, totalCount: 0, items: [], lastMessage: "" };
+
+export function ExtensionBar({ activeFlow = "home", showSorareGuide = true }: ExtensionBarProps) {
   const [ready, setReady] = useState<boolean>(() => isExtensionReady());
-  const [qState, setQState] = useState<QueueState | null>(null);
-  const [showGuide, setShowGuide] = useState<boolean>(false);
-
+  const [qState, setQState] = useState<QueueState>(emptyState);
+  const [selectedFlow, setSelectedFlow] = useState<SorareFlowKind>(activeFlow);
+  useEffect(() => { setSelectedFlow(activeFlow); }, [activeFlow]);
   useEffect(() => {
-    const unsub = subscribeExtension((ev: ExtEvent) => {
-      if (ev.type === "ready") setReady(true);
-      if (ev.type === "state") setQState(ev.state);
-    });
-    return unsub;
+    setReady(isExtensionReady()); requestQueueState();
+    const unsub = subscribeExtension((ev) => { if (ev.type === "ready") { setReady(true); requestQueueState(); } else if (ev.type === "state") { setReady(true); setQState(ev.state); } });
+    const onFlowStarted = (e: Event) => { const fl = (e as CustomEvent<{ flow?: SorareFlowKind }>).detail?.flow; if (fl) setSelectedFlow(fl); };
+    window.addEventListener("sorarepilot:flow-started", onFlowStarted);
+    return () => { unsub(); window.removeEventListener("sorarepilot:flow-started", onFlowStarted); };
   }, []);
-
-  const mode = qState ? qState.mode : "idle";
-  const flow = qState ? qState.flow : null;
-  const cur = qState && qState.currentItem ? (qState.currentItem.label || qState.currentItem.id || "elemento") : "--";
-  const rem = qState ? (qState.remainingCount + "/" + qState.totalCount) : "0/0";
-  const msg = qState ? qState.lastMessage : (ready ? "Pronto" : "Estensione non rilevata");
-
+  const effectiveFlow: SorareFlowKind = (qState.flow as SorareFlowKind) || selectedFlow;
+  const target = getSorareTargetUrl(effectiveFlow);
+  const openSorarePage = () => window.open(target.url, "_blank", "noopener,noreferrer");
+  const openStorePage = () => window.open(STORE_URL, "_blank", "noopener,noreferrer");
   return (
-    <div className="flex flex-col gap-2 px-3 py-2.5 mb-3 rounded-lg bg-slate-900 border border-slate-700 text-xs text-slate-200">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="flex flex-wrap items-center gap-3">
-          <span className={ready ? "text-emerald-400 font-semibold" : "text-amber-400 font-semibold"}>
-            {ready ? "Estensione attiva" : "Estensione offline"}
-          </span>
-          <span>Stato: <strong>{flow ? mode + " (" + flow + ")" : mode}</strong></span>
-          <span>In corso: <strong>{cur}</strong></span>
-          <span>Rimanenti: <strong>{rem}</strong></span>
-          <span className="text-slate-400">{msg}</span>
+    <div className="bg-[#16161a] border border-[#2a2a32] p-6 rounded-2xl space-y-4 shadow-md text-white">
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div className="flex items-center space-x-3">
+          <div className="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-400 border border-amber-500/30 flex items-center justify-center shrink-0"><Puzzle className="h-5 w-5" /></div>
+          <div>
+            <h3 className="text-base font-bold text-white">{ready ? "Estensione attiva" : "Estensione non rilevata"}</h3>
+            <p className="text-xs text-zinc-400">Stato: {qState.mode} - {qState.completedCount}/{qState.totalCount}{qState.lastMessage ? " - " + qState.lastMessage : ""}</p>
+          </div>
         </div>
-        <div className="flex flex-wrap items-center gap-1.5">
-          <a
-            href={EXTENSION_ZIP_URL}
-            download="sorarepilot-extension.zip"
-            className={ready
-              ? "px-2.5 py-1 rounded bg-slate-800 border border-slate-600 text-slate-200 font-semibold hover:bg-slate-700"
-              : "px-2.5 py-1 rounded bg-sky-500 text-slate-950 font-semibold hover:bg-sky-400"}
-          >
-            {ready ? "Scarica .ZIP" : "Scarica / Installa estensione"}
-          </a>
-          <button
-            type="button"
-            onClick={() => setShowGuide((v) => !v)}
-            className="px-2.5 py-1 rounded bg-slate-800 border border-slate-600 text-slate-300 font-semibold hover:bg-slate-700"
-          >
-            {showGuide ? "Nascondi guida" : "Come installare"}
-          </button>
-          <button type="button" onClick={pauseQueue} className="px-2.5 py-1 rounded bg-amber-500 text-slate-950 font-semibold hover:bg-amber-400">Pausa</button>
-          <button type="button" onClick={resumeQueue} className="px-2.5 py-1 rounded bg-emerald-500 text-slate-950 font-semibold hover:bg-emerald-400">Riprendi</button>
-          <button type="button" onClick={stopQueue} className="px-2.5 py-1 rounded bg-rose-600 text-white font-semibold hover:bg-rose-500">Stop</button>
+        <div className="flex flex-wrap items-center gap-2">
+          {!ready && (<button type="button" onClick={openStorePage} className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold bg-blue-600 hover:bg-blue-500 text-white border border-blue-500/40 transition-colors cursor-pointer"><Download className="h-3.5 w-3.5" />Installa estensione</button>)}
+          <button type="button" onClick={() => { requestQueueState(); setReady(isExtensionReady()); }} className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-[#1e1e26] hover:bg-[#272732] text-zinc-200 border border-[#2f2f3a] transition-colors cursor-pointer"><RefreshCw className="h-3.5 w-3.5" />Verifica stato</button>
+          <button type="button" onClick={() => pauseQueue()} className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-[#1e1e26] hover:bg-[#272732] text-zinc-200 border border-[#2f2f3a] transition-colors cursor-pointer"><Pause className="h-3.5 w-3.5" />Pausa</button>
+          <button type="button" onClick={() => resumeQueue()} className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-[#1e1e26] hover:bg-[#272732] text-zinc-200 border border-[#2f2f3a] transition-colors cursor-pointer"><Play className="h-3.5 w-3.5" />Riprendi</button>
+          <button type="button" onClick={() => stopQueue()} className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-red-950/70 hover:bg-red-900/70 text-red-200 border border-red-800/60 transition-colors cursor-pointer"><Square className="h-3.5 w-3.5" />Stop</button>
         </div>
       </div>
-      {showGuide && (
-        <div className="px-3 py-2 rounded bg-slate-950/80 border border-slate-800 text-[11px] text-slate-300 leading-relaxed">
-          <strong>Installazione manuale su Chrome:</strong> 1) Scarica e decomprimi <code>sorarepilot-extension.zip</code> in una cartella fissa. 2) Apri <code>chrome://extensions</code> e attiva <strong>Modalità sviluppatore</strong>. 3) Clicca <strong>Carica estensione non pacchettizzata</strong> e seleziona la cartella estratta.
+      {showSorareGuide && (
+        <div className="bg-[#0e0e12] border border-[#282834] px-4 py-3 rounded-xl flex flex-wrap items-center justify-between gap-3 text-xs text-zinc-300">
+          <span>Tieni sempre aperta e loggata una scheda di Sorare in un altra pagina.</span>
+          <button type="button" onClick={openSorarePage} className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white border border-emerald-500/40 transition-colors cursor-pointer"><ExternalLink className="h-3.5 w-3.5" />{target.label}</button>
         </div>
       )}
     </div>
   );
-};
+}
 
 export default ExtensionBar;
