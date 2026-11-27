@@ -3689,7 +3689,7 @@ export default function App() {
                           )}
                         </div>
                       </div>
-                      <div className="mt-3 w-full flex flex-wrap items-center gap-2">
+                      <div className="mt-3 w-full flex flex-wrap lg:flex-nowrap items-center gap-2">
                         <button
                           type="button"
                           onClick={() => setInSeasonOnly(!inSeasonOnly)}
@@ -3702,10 +3702,6 @@ export default function App() {
                           {inSeasonOnly ? '🟢 In-Season (Attivo)' : translations[currentLang]?.allSeasons || '⚪ Tutte le stagioni'}
                         </button>
                         
-                        <button type="button" onClick={resetGalleryFilters} className="px-3 py-1.5 rounded-lg text-xs font-bold bg-[#18181f] border border-[#2c2c38] text-zinc-300 hover:text-white cursor-pointer ml-auto">
-                          Reset parametri
-                        </button>
-                      </div>
 
                         <button
                           type="button"
@@ -3753,12 +3749,16 @@ export default function App() {
                         >
                           Doppioni
                         </button>
+                        <button type="button" onClick={resetGalleryFilters} className="px-3 py-1.5 rounded-lg text-xs font-bold bg-[#18181f] border border-[#2c2c38] text-zinc-300 hover:text-white cursor-pointer ml-auto whitespace-nowrap shrink-0">
+                          Reset parametri
+                        </button>
+                      </div>
                       </div>
                     )}
                   </div>
 
                   {myClubSubTab === 'GALLERIA' && (
-                      <>
+                    <>
                       {sortedProCards.length === 0 ? (
                         <div className="text-center py-20 bg-[#16161a] border border-[#2a2a32] rounded-2xl">
                           <p className="text-sm font-bold text-zinc-400">Nessuna carta corrisponde ai filtri selezionati.</p>
