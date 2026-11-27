@@ -3221,7 +3221,7 @@ export default function App() {
   };
 
   return (
-    <div className="h-screen w-screen bg-[#0e0e12] text-zinc-100 flex font-sans overflow-hidden">
+    <div className="min-h-screen w-full bg-[#0e0e12] text-zinc-100 flex font-sans">
       <Sidebar 
         activeTab={activeTab} 
         setActiveTab={navigateToTab} 
@@ -3232,7 +3232,7 @@ export default function App() {
         currentLang={currentLang}
       />
 
-      <main className={`flex-1 min-w-0 px-6 sm:px-10 pt-8 h-screen max-w-[1440px] mx-auto block ${activeTab === 'HOME' ? 'overflow-hidden pb-8' : 'overflow-y-auto custom-scrollbar pb-16'}`}>
+      <main className={`flex-1 min-w-0 px-6 sm:px-10 pt-8 max-w-[1440px] mx-auto block ${activeTab === 'HOME' ? 'overflow-y-auto pb-8' : 'overflow-y-auto custom-scrollbar pb-16'}`}>
         {errorMessage && (
           <div className="bg-red-500/10 border border-red-500/30 text-red-400 p-4 rounded-xl flex items-center justify-between text-xs font-bold mb-4 shrink-0">
             <span>{errorMessage}</span>
