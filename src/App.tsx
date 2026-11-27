@@ -3690,7 +3690,6 @@ export default function App() {
                         </div>
                       </div>
                       <div className="mt-3 w-full flex flex-wrap items-center gap-2">
-                        
                         <button
                           type="button"
                           onClick={() => setInSeasonOnly(!inSeasonOnly)}
@@ -3702,9 +3701,10 @@ export default function App() {
                         >
                           {inSeasonOnly ? '🟢 In-Season (Attivo)' : translations[currentLang]?.allSeasons || '⚪ Tutte le stagioni'}
                         </button>
+                        
                         <button type="button" onClick={resetGalleryFilters} className="px-3 py-1.5 rounded-lg text-xs font-bold bg-[#18181f] border border-[#2c2c38] text-zinc-300 hover:text-white cursor-pointer ml-auto">
                           Reset parametri
-                        </button></button>
+                        </button>
                       </div>
 
                         <button
