@@ -17,7 +17,6 @@ import {
   Edit3,
   Calendar,
   LogOut,
-  Power,
   BookOpen,
   MessageCircle,
   HelpCircle,
@@ -37,7 +36,7 @@ import { getLocalGameWeeks, getCurrentGameWeek } from './lib/gameweek-service';
 
 import LineupBuilder from './LineupBuilder';
 import ExtensionBar from './ExtensionBar';
-import { startMissionsFlow, startSalesFlow } from './extension-client';
+import { startMissionsFlow } from './extension-client';
 import { sounds } from './soundEffects';
 import { translations } from './translations';
 import './vg-transitions.css';
@@ -2306,17 +2305,13 @@ interface SellingModuleProps {
   currentLang?: 'IT' | 'EN' | 'FR' | 'ES';
 }
 
-const SellingModule: React.FC<SellingModuleProps> = ({ cards, token, audioActive, notifications, onClearNotifications, currentLang = 'IT' }) => {
+const SellingModule: React.FC<SellingModuleProps> = ({ cards, audioActive, notifications, onClearNotifications, currentLang = 'IT' }) => {
   const t = (key: string) => translations[currentLang]?.[key] || translations['IT']?.[key] || key;
 
   type SellFilterCategory = 'UNSOLD' | 'OVER_30' | 'CAPITAL_GAIN' | 'DUPLICATES' | 'WITH_X';
 
   const [sellCategory, setSellCategory] = useState<SellFilterCategory>('UNSOLD');
   const [selectedCardIds, setSelectedCardIds] = useState<string[]>([]);
-  const [autoSellActive, setAutoSellActive] = useState<boolean>(false);
-  const autoSellLockRef = useRef<boolean>(false);
-  const lastAutoSellTimeRef = useRef<number>(0);
-  const [isProcessing, setIsProcessing] = useState<boolean>(false);
   const [sellingStatus, setSellingStatus] = useState<string | null>(null);
   const proCards = cards.filter((c) => {
     const r = (c.rarity || '').toUpperCase();
@@ -2506,61 +2501,8 @@ const SellingModule: React.FC<SellingModuleProps> = ({ cards, token, audioActive
   };
 
   // Carte tornate non ancora rilistate in questo ciclo
-  const pendingRelistCards = expiredCards.filter((c: any) => !c.autoRelisted);
 
-  useEffect(() => {
-    if (!autoSellActive) {
-      localStorage.setItem('sorare_autosell_active', 'false');
-      autoSellLockRef.current = false;
-      return;
-    }
 
-    localStorage.setItem('sorare_autosell_active', 'true');
-    const now = Date.now();
-    if (
-      pendingRelistCards.length > 0 &&
-      !isProcessing &&
-      !autoSellLockRef.current &&
-      now - lastAutoSellTimeRef.current > 5000
-    ) {
-      lastAutoSellTimeRef.current = now;
-      triggerAutoSellApi(pendingRelistCards);
-    }
-  }, [autoSellActive, pendingRelistCards.length, isProcessing]);
-
-  const triggerAutoSellApi = async (cardsToRelist: any[]) => {
-    if (isProcessing || autoSellLockRef.current || cardsToRelist.length === 0) return; autoSellLockRef.current = true;
-    setIsProcessing(true);
-    setSellingStatus(t('autoSellRunning'));
-
-    try {
-      const payload = cardsToRelist.map((c) => ({
-        cardId: c.id,
-        priceEur: c.lastPriceEur || c.askingPrice || c.priceEur || 0,
-        durationDays: c.lastDurationDays || 7
-      }));
-
-      startSalesFlow(cardsToRelist.map((c: any, idx: number) => ({ id: String(c?.id || idx), label: 'Vendita carta #' + (idx + 1), sale: c })));
-      const response = await fetch(`${API_BASE_URL}/api/autosell-relist`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token, relists: payload })
-      });
-
-      const result = await response.json();
-      if (!response.ok) {
-        throw new Error(result.error || 'Error');
-      }
-
-      setSellingStatus(
-        t('autoSellSuccess')?.replace('{count}', String(cardsToRelist.length))
-      );
-    } catch (err: any) {
-      setSellingStatus(`❌ ${t('autoSellError')}: ${err.message}`);
-    } finally {
-      setIsProcessing(false);
-    }
-  };
 
   const getRarityBadge = (rarity: string) => {
     switch (rarity) {
@@ -2571,6 +2513,81 @@ const SellingModule: React.FC<SellingModuleProps> = ({ cards, token, audioActive
       default: return 'bg-[#282834] text-zinc-300 border-zinc-700';
     }
   };
+
+  const [bulkPriceMode, setBulkPriceMode] = useState<'PERCENT' | 'FIXED'>('PERCENT');
+  const [bulkPriceDeltaPct, setBulkPriceDeltaPct] = useState<string>('0');
+  const [bulkFixedPriceEur, setBulkFixedPriceEur] = useState<string>('');
+  const [bulkDurationDays, setBulkDurationDays] = useState<number>(7);
+  const [copiedQueue, setCopiedQueue] = useState<boolean>(false);
+
+  const getBaseCardPrice = (c: any): number => {
+    const rawPrice = Number(c?.lastPriceEur ?? c?.askingPrice ?? c?.priceEur ?? 0);
+    return Number.isFinite(rawPrice) && rawPrice > 0 ? rawPrice : 0;
+  };
+
+  const computePreparedPrice = (c: any): number => {
+    if (bulkPriceMode === 'FIXED') {
+      const fixedVal = parseFloat(String(bulkFixedPriceEur).replace(',', '.'));
+      return Number.isFinite(fixedVal) && fixedVal > 0 ? Number(fixedVal.toFixed(2)) : getBaseCardPrice(c);
+    }
+    const base = getBaseCardPrice(c);
+    const pct = parseFloat(String(bulkPriceDeltaPct).replace(',', '.'));
+    if (!base) return 0;
+    if (!Number.isFinite(pct) || pct === 0) return Number(base.toFixed(2));
+    return Math.max(0.01, Number((base * (1 + pct / 100)).toFixed(2)));
+  };
+
+  const selectedSaleCards = visibleSaleCards.filter((c: any) => selectedCardIds.includes(String(c.id)));
+  const preparedTotalEur = selectedSaleCards.reduce((acc: number, c: any) => acc + computePreparedPrice(c), 0);
+
+  const handleCopySelectedQueue = async () => {
+    if (selectedSaleCards.length === 0) return;
+    const summary = selectedSaleCards
+      .map((c: any, idx: number) => `${idx + 1}. ${c.name || c.player?.displayName || c.id} (${c.rarity || 'PRO'}) -> €${computePreparedPrice(c).toFixed(2)} | ${bulkDurationDays}d`)
+      .join('\n');
+    try {
+      await navigator.clipboard?.writeText(summary);
+      setCopiedQueue(true);
+      setTimeout(() => setCopiedQueue(false), 2000);
+    } catch {
+      setSellingStatus(summary);
+    }
+  };
+
+  const [copiedCardId, setCopiedCardId] = useState<string | null>(null);
+
+  const getSorareCardUrl = (c: any): string => {
+    const slug = String(c?.slug || '').trim();
+    if (slug) return `https://sorare.com/football/cards/${encodeURIComponent(slug)}`;
+    const playerSlug = String(c?.player?.slug || '').trim();
+    if (playerSlug) return `https://sorare.com/football/players/${encodeURIComponent(playerSlug)}/cards`;
+    const query = encodeURIComponent(String(c?.name || c?.player?.displayName || ''));
+    return `https://sorare.com/football/market?query=${query}`;
+  };
+
+  const handleCopySinglePrice = async (cardId: string, price: number) => {
+    const formatted = price.toFixed(2);
+    try {
+      await navigator.clipboard?.writeText(formatted);
+      setCopiedCardId(cardId);
+      setTimeout(() => setCopiedCardId((prev) => (prev === cardId ? null : prev)), 1500);
+    } catch {
+      setSellingStatus(`Prezzo copiato: €${formatted}`);
+    }
+  };
+
+  const handleSubmitSelectedBatch = async () => {
+    if (selectedSaleCards.length === 0) return;
+    // Flusso 100% locale: nessuna chiamata all'estensione o apertura di pagine esterne
+    await handleCopySelectedQueue();
+    setSellingStatus(`✅ Coda pronta per ${selectedSaleCards.length} carte (Totale €${preparedTotalEur.toFixed(2)}). Usa 'Copia €' e 'Apri su Sorare ↗' qui sotto.`);
+  };
+
+
+
+
+
+
 
   return (
     <div className="space-y-6 w-full px-1">
@@ -2592,36 +2609,16 @@ const SellingModule: React.FC<SellingModuleProps> = ({ cards, token, audioActive
           </div>
         </div>
 
-        <div className="flex items-center space-x-4 bg-[#0e0e12] border border-[#282834] px-5 py-3 rounded-2xl shadow-inner">
+        <div className="flex items-center space-x-3 bg-[#0e0e12] border border-[#282834] px-5 py-3 rounded-2xl shadow-inner">
           <div className="flex flex-col text-left">
-            <span className="text-xs font-black text-white uppercase tracking-wider flex items-center">
-              <Power className={`h-3.5 w-3.5 mr-1.5 ${autoSellActive ? 'text-red-500' : 'text-zinc-500'}`} />
-              Auto-Sell
+            <span className="text-xs font-black text-white uppercase tracking-wider flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 inline-block" />
+              Coda Assistita
             </span>
             <span className="text-[10px] text-zinc-400">
-              {autoSellActive ? t('autoSellOn') : t('autoSellOff')}
+              {selectedSaleCards.length > 0 ? `${selectedSaleCards.length} carte pronte (€${preparedTotalEur.toFixed(2)})` : "Seleziona le carte per preparare i prezzi"}
             </span>
           </div>
-
-          <button
-            type="button"
-            onMouseEnter={() => { if (audioActive) sounds.playHover(); }}
-            onClick={() => {
-              if (audioActive) sounds.playClick();
-              if (!autoSellActive) {
-                const ok = window.confirm('Attivare Auto-Sell? Verrà avviata la procedura di rimessa in vendita.');
-                if (!ok) return;
-                lastAutoSellTimeRef.current = Date.now();
-                setAutoSellActive(true);
-              } else {
-                autoSellLockRef.current = false;
-                setAutoSellActive(false);
-              }
-            }}
-            className={`w-14 h-8 flex items-center rounded-full p-1 transition-colors cursor-pointer ${autoSellActive ? 'bg-red-600 shadow-[0_0_3px_rgba(239,68,68,0.45)]' : 'bg-zinc-700'}`}
-          >
-            <div className={`bg-white w-6 h-6 rounded-full shadow-md transform transition-transform ${autoSellActive ? 'translate-x-6' : 'translate-x-0'}`} />
-          </button>
         </div>
       </div>
 
@@ -2681,6 +2678,118 @@ const SellingModule: React.FC<SellingModuleProps> = ({ cards, token, audioActive
         </div>
       </div>
 
+
+
+      {selectedSaleCards.length > 0 && (
+        <div className="bg-[#16161a] border border-[#ff003c]/40 p-4 rounded-2xl space-y-3 shadow-md">
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-xs font-black uppercase tracking-wider text-white bg-[#ff003c]/20 border border-[#ff003c]/40 px-2.5 py-1 rounded-lg">
+                {selectedSaleCards.length} selezionate
+              </span>
+              <span className="text-xs font-bold text-emerald-400">
+                Totale stimato: €{preparedTotalEur.toFixed(2)}
+              </span>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2">
+              <select
+                value={bulkPriceMode}
+                onChange={(e) => setBulkPriceMode(e.target.value as 'PERCENT' | 'FIXED')}
+                className="bg-[#0e0e12] border border-[#2e2e3a] text-white text-xs font-bold rounded-xl px-3 py-2 outline-none cursor-pointer"
+              >
+                <option value="PERCENT">Variazione % su prezzo base</option>
+                <option value="FIXED">Prezzo fisso (€)</option>
+              </select>
+
+              {bulkPriceMode === 'PERCENT' ? (
+                <input
+                  type="number"
+                  step="1"
+                  value={bulkPriceDeltaPct}
+                  onChange={(e) => setBulkPriceDeltaPct(e.target.value)}
+                  placeholder="% (es. -5 o +10)"
+                  className="w-28 bg-[#0e0e12] border border-[#2e2e3a] text-white text-xs font-bold rounded-xl px-3 py-2 outline-none"
+                />
+              ) : (
+                <input
+                  type="number"
+                  step="0.1"
+                  min="0.01"
+                  value={bulkFixedPriceEur}
+                  onChange={(e) => setBulkFixedPriceEur(e.target.value)}
+                  placeholder="Prezzo €"
+                  className="w-28 bg-[#0e0e12] border border-[#2e2e3a] text-white text-xs font-bold rounded-xl px-3 py-2 outline-none"
+                />
+              )}
+
+              <select
+                value={bulkDurationDays}
+                onChange={(e) => setBulkDurationDays(Number(e.target.value))}
+                className="bg-[#0e0e12] border border-[#2e2e3a] text-white text-xs font-bold rounded-xl px-3 py-2 outline-none cursor-pointer"
+              >
+                <option value={3}>3 giorni</option>
+                <option value={5}>5 giorni</option>
+                <option value={7}>7 giorni</option>
+                <option value={14}>14 giorni</option>
+              </select>
+
+              <button
+                type="button"
+                onClick={handleCopySelectedQueue}
+                className="px-3 py-2 rounded-xl bg-[#0e0e12] hover:bg-[#1f1f27] border border-[#2e2e3a] text-xs font-bold text-zinc-200 cursor-pointer"
+              >
+                {copiedQueue ? 'Coda copiata ✓' : 'Copia riepilogo'}
+              </button>
+
+              <button
+                type="button"
+                onClick={handleSubmitSelectedBatch}
+                className="px-4 py-2 rounded-xl bg-[#ff003c] hover:bg-[#e00035] text-white text-xs font-black uppercase tracking-wider cursor-pointer"
+              >
+                {`Prepara coda (${selectedSaleCards.length})`}
+              </button>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2 pt-2 border-t border-[#2a2a32]">
+            {selectedSaleCards.map((c: any) => {
+              const price = computePreparedPrice(c);
+              const idStr = String(c.id);
+              return (
+                <div
+                  key={idStr}
+                  className="flex items-center justify-between gap-2 bg-[#0e0e12] border border-[#2a2a32] px-3 py-2 rounded-xl text-xs"
+                >
+                  <div className="truncate">
+                    <span className="font-bold text-white">{c.name}</span>
+                    <span className="text-zinc-500 ml-1.5">({c.rarity})</span>
+                    <span className="text-emerald-400 font-black ml-2">€{price.toFixed(2)}</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => handleCopySinglePrice(idStr, price)}
+                      className="px-2.5 py-1 rounded-lg bg-[#16161a] hover:bg-[#23232c] border border-[#2e2e3a] text-[11px] font-bold text-zinc-200 cursor-pointer"
+                    >
+                      {copiedCardId === idStr ? 'Copiato ✓' : 'Copia €'}
+                    </button>
+                    <a
+                      href={getSorareCardUrl(c)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-2.5 py-1 rounded-lg bg-[#ff003c]/15 hover:bg-[#ff003c]/25 border border-[#ff003c]/40 text-[11px] font-bold text-[#ff4d79]"
+                    >
+                      Apri su Sorare ↗
+                    </a>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {visibleSaleCards.length === 0 ? (
           <div className="col-span-full bg-[#16161a] border border-[#2a2a32] py-14 px-8 rounded-2xl flex flex-col items-center justify-center text-center shadow-md text-zinc-400 font-bold text-sm uppercase">
@@ -2697,7 +2806,7 @@ const SellingModule: React.FC<SellingModuleProps> = ({ cards, token, audioActive
                   : 'border-[#2a2a32] hover:border-[#3e3e4c]'
               }`}
             >
-              <div className="w-16 h-20 bg-black rounded-lg overflow-hidden border border-[#2a2a32] shrink-0 flex items-center justify-center">
+              <div className="w-16 h-20 flex items-center justify-center shrink-0">
                 <img src={card.pictureUrl} alt={card.name} className="w-full h-full object-contain" />
               </div>
               <div className="overflow-hidden flex-1">
@@ -3766,8 +3875,8 @@ export default function App() {
                       ) : (
                         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-5">
                           {sortedProCards.map((card: any) => (
-                            <div key={card.id} className="bg-[#16161a] border border-[#2a2a32] p-3 rounded-2xl flex flex-col items-center space-y-2 shadow-lg">
-                              <div className="w-full max-w-[152px] aspect-[3/4] rounded-xl overflow-hidden bg-black/40 border border-zinc-800 flex items-center justify-center relative p-1">
+                            <div key={card.id} className="bg-[#16161a] border border-[#2a2a32] p-2 rounded-2xl flex flex-col items-center space-y-1.5 shadow-lg">
+                              <div className="w-full max-w-[164px] aspect-[5/8] overflow-hidden flex items-center justify-center relative">
                                 <img src={card.pictureUrl} alt={card.name} className="w-full h-full object-contain" />
                               </div>
                               <div className="text-center w-full">
