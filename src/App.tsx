@@ -2775,7 +2775,7 @@ export default function App() {
   const [clubSortBy, setClubSortBy] = useState<string>('novita');
   /* GALLERY_FILTERS_STATE */
   const [galleryOpenGroups, setGalleryOpenGroups] = useState<Record<string, boolean>>({
-    CARTA: true,
+    CARTA: false,
     INFO_PARTITA: false,
     GIOCATORE: false,
     COLLEZIONABILI: false
@@ -3578,14 +3578,22 @@ export default function App() {
                         </div>
                         {/* GALLERY_PARAMETER_SECTIONS_UI */}
                       <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-left">
-                        <div className="bg-[#121216] border border-[#2a2a32] rounded-xl p-3">
-                          <button type="button" onClick={() => toggleGalleryGroup('CARTA')} className="w-full flex items-center justify-between text-[11px] font-black uppercase tracking-wider text-zinc-200 cursor-pointer">
+                        <div
+                          onClick={() => toggleGalleryGroup('CARTA')}
+                          className="bg-[#121216] border border-[#2a2a32] hover:border-amber-500/50 rounded-xl p-3 cursor-pointer transition-colors"
+                        >
+                          <div className="w-full flex items-center justify-between text-[11px] font-black uppercase tracking-wider text-zinc-200 select-none">
                             <span>CARTA</span>
                             <span>{galleryOpenGroups.CARTA ? '▲' : '▼'}</span>
-                          </button>
+                          </div>
                           {galleryOpenGroups.CARTA && (
-                            <div className="mt-2.5 space-y-2 text-xs">
-                              <input type="text" value={galleryFilters.league} onChange={(e) => setGalleryFilterVal('league', e.target.value)} placeholder="League & Competizione" className="w-full bg-[#18181f] border border-[#2c2c38] rounded-lg px-2.5 py-1.5 text-white placeholder:text-zinc-500 outline-none focus:border-amber-500" />
+                            <div onClick={(e) => e.stopPropagation()} className="mt-2.5 space-y-2 text-xs cursor-default">
+                              <input type="text" list="gallery-league-list" value={galleryFilters.league} onChange={(e) => setGalleryFilterVal('league', e.target.value)} placeholder="League & Competizione" className="w-full bg-[#18181f] border border-[#2c2c38] rounded-lg px-2.5 py-1.5 text-white placeholder:text-zinc-500 outline-none focus:border-amber-500" />
+                              <datalist id="gallery-league-list">
+                                {Array.from(new Set((cards || []).map((c: any) => c?.competition || c?.league || c?.so5League?.displayName).filter(Boolean))).slice(0, 100).map((item: any) => (
+                                  <option key={String(item)} value={String(item)} />
+                                ))}
+                              </datalist>
                               <select value={galleryFilters.position} onChange={(e) => setGalleryFilterVal('position', e.target.value)} className="w-full bg-[#18181f] border border-[#2c2c38] rounded-lg px-2.5 py-1.5 text-white outline-none focus:border-amber-500">
                                 <option value="">Posizione (Tutte)</option>
                                 <option value="Goalkeeper">Portiere (GK)</option>
@@ -3593,35 +3601,61 @@ export default function App() {
                                 <option value="Midfielder">Centrocampista (MID)</option>
                                 <option value="Forward">Attaccante (FWD)</option>
                               </select>
-                              <input type="text" value={galleryFilters.season} onChange={(e) => setGalleryFilterVal('season', e.target.value)} placeholder="Stagione" className="w-full bg-[#18181f] border border-[#2c2c38] rounded-lg px-2.5 py-1.5 text-white placeholder:text-zinc-500 outline-none focus:border-amber-500" />
-                              <input type="text" value={galleryFilters.team} onChange={(e) => setGalleryFilterVal('team', e.target.value)} placeholder="Squadra" className="w-full bg-[#18181f] border border-[#2c2c38] rounded-lg px-2.5 py-1.5 text-white placeholder:text-zinc-500 outline-none focus:border-amber-500" />
+                              <input type="text" list="gallery-season-list" value={galleryFilters.season} onChange={(e) => setGalleryFilterVal('season', e.target.value)} placeholder="Stagione" className="w-full bg-[#18181f] border border-[#2c2c38] rounded-lg px-2.5 py-1.5 text-white placeholder:text-zinc-500 outline-none focus:border-amber-500" />
+                              <datalist id="gallery-season-list">
+                                {Array.from(new Set((cards || []).map((c: any) => c?.season || c?.seasonYear).filter(Boolean))).slice(0, 50).map((item: any) => (
+                                  <option key={String(item)} value={String(item)} />
+                                ))}
+                              </datalist>
+                              <input type="text" list="gallery-team-list" value={galleryFilters.team} onChange={(e) => setGalleryFilterVal('team', e.target.value)} placeholder="Squadra" className="w-full bg-[#18181f] border border-[#2c2c38] rounded-lg px-2.5 py-1.5 text-white placeholder:text-zinc-500 outline-none focus:border-amber-500" />
+                              <datalist id="gallery-team-list">
+                                {Array.from(new Set((cards || []).map((c: any) => c?.club || c?.team || c?.so5Club?.name).filter(Boolean))).slice(0, 150).map((item: any) => (
+                                  <option key={String(item)} value={String(item)} />
+                                ))}
+                              </datalist>
                             </div>
                           )}
                         </div>
 
-                        <div className="bg-[#121216] border border-[#2a2a32] rounded-xl p-3">
-                          <button type="button" onClick={() => toggleGalleryGroup('INFO_PARTITA')} className="w-full flex items-center justify-between text-[11px] font-black uppercase tracking-wider text-zinc-200 cursor-pointer">
+                        <div
+                          onClick={() => toggleGalleryGroup('INFO_PARTITA')}
+                          className="bg-[#121216] border border-[#2a2a32] hover:border-amber-500/50 rounded-xl p-3 cursor-pointer transition-colors"
+                        >
+                          <div className="w-full flex items-center justify-between text-[11px] font-black uppercase tracking-wider text-zinc-200 select-none">
                             <span>INFO PARTITA</span>
                             <span>{galleryOpenGroups.INFO_PARTITA ? '▲' : '▼'}</span>
-                          </button>
+                          </div>
                           {galleryOpenGroups.INFO_PARTITA && (
-                            <div className="mt-2.5 space-y-2 text-xs">
-                              <input type="text" value={galleryFilters.currentGw} onChange={(e) => setGalleryFilterVal('currentGw', e.target.value)} placeholder="Game Week in corso" className="w-full bg-[#18181f] border border-[#2c2c38] rounded-lg px-2.5 py-1.5 text-white placeholder:text-zinc-500 outline-none focus:border-amber-500" />
-                              <input type="number" step="0.1" value={galleryFilters.avgScore} onChange={(e) => setGalleryFilterVal('avgScore', e.target.value)} placeholder="Punteggio medio min." className="w-full bg-[#18181f] border border-[#2c2c38] rounded-lg px-2.5 py-1.5 text-white placeholder:text-zinc-500 outline-none focus:border-amber-500" />
-                              <input type="number" value={galleryFilters.gamesPlayed} onChange={(e) => setGalleryFilterVal('gamesPlayed', e.target.value)} placeholder="Partite giocate min." className="w-full bg-[#18181f] border border-[#2c2c38] rounded-lg px-2.5 py-1.5 text-white placeholder:text-zinc-500 outline-none focus:border-amber-500" />
+                            <div onClick={(e) => e.stopPropagation()} className="mt-2.5 space-y-2 text-xs cursor-default">
+                              <input type="text" list="gallery-gw-list" value={galleryFilters.currentGw} onChange={(e) => setGalleryFilterVal('currentGw', e.target.value)} placeholder="Gameweek in corso" className="w-full bg-[#18181f] border border-[#2c2c38] rounded-lg px-2.5 py-1.5 text-white placeholder:text-zinc-500 outline-none focus:border-amber-500" />
+                              <datalist id="gallery-gw-list">
+                                {Array.from(new Set((cards || []).map((c: any) => c?.gameWeek || c?.gw || c?.nextGameWeek).filter(Boolean))).slice(0, 80).map((item: any) => (
+                                  <option key={String(item)} value={String(item)} />
+                                ))}
+                              </datalist>
+                              <input type="number" step="0.1" value={galleryFilters.avgScore} onChange={(e) => setGalleryFilterVal('avgScore', e.target.value)} placeholder="Media punti (AVG)" className="w-full bg-[#18181f] border border-[#2c2c38] rounded-lg px-2.5 py-1.5 text-white placeholder:text-zinc-500 outline-none focus:border-amber-500" />
+                              <input type="number" value={galleryFilters.gamesPlayed} onChange={(e) => setGalleryFilterVal('gamesPlayed', e.target.value)} placeholder="Partite giocate" className="w-full bg-[#18181f] border border-[#2c2c38] rounded-lg px-2.5 py-1.5 text-white placeholder:text-zinc-500 outline-none focus:border-amber-500" />
                             </div>
                           )}
                         </div>
 
-                        <div className="bg-[#121216] border border-[#2a2a32] rounded-xl p-3">
-                          <button type="button" onClick={() => toggleGalleryGroup('GIOCATORE')} className="w-full flex items-center justify-between text-[11px] font-black uppercase tracking-wider text-zinc-200 cursor-pointer">
+                        <div
+                          onClick={() => toggleGalleryGroup('GIOCATORE')}
+                          className="bg-[#121216] border border-[#2a2a32] hover:border-amber-500/50 rounded-xl p-3 cursor-pointer transition-colors"
+                        >
+                          <div className="w-full flex items-center justify-between text-[11px] font-black uppercase tracking-wider text-zinc-200 select-none">
                             <span>GIOCATORE</span>
                             <span>{galleryOpenGroups.GIOCATORE ? '▲' : '▼'}</span>
-                          </button>
+                          </div>
                           {galleryOpenGroups.GIOCATORE && (
-                            <div className="mt-2.5 space-y-2 text-xs">
+                            <div onClick={(e) => e.stopPropagation()} className="mt-2.5 space-y-2 text-xs cursor-default">
                               <input type="number" value={galleryFilters.age} onChange={(e) => setGalleryFilterVal('age', e.target.value)} placeholder="Età" className="w-full bg-[#18181f] border border-[#2c2c38] rounded-lg px-2.5 py-1.5 text-white placeholder:text-zinc-500 outline-none focus:border-amber-500" />
-                              <input type="text" value={galleryFilters.nationality} onChange={(e) => setGalleryFilterVal('nationality', e.target.value)} placeholder="Nazionalità" className="w-full bg-[#18181f] border border-[#2c2c38] rounded-lg px-2.5 py-1.5 text-white placeholder:text-zinc-500 outline-none focus:border-amber-500" />
+                              <input type="text" list="gallery-nat-list" value={galleryFilters.nationality} onChange={(e) => setGalleryFilterVal('nationality', e.target.value)} placeholder="Nazionalità" className="w-full bg-[#18181f] border border-[#2c2c38] rounded-lg px-2.5 py-1.5 text-white placeholder:text-zinc-500 outline-none focus:border-amber-500" />
+                              <datalist id="gallery-nat-list">
+                                {Array.from(new Set((cards || []).map((c: any) => c?.nationality || c?.country).filter(Boolean))).slice(0, 100).map((item: any) => (
+                                  <option key={String(item)} value={String(item)} />
+                                ))}
+                              </datalist>
                               <input type="text" value={galleryFilters.playerName} onChange={(e) => setGalleryFilterVal('playerName', e.target.value)} placeholder="Nome" className="w-full bg-[#18181f] border border-[#2c2c38] rounded-lg px-2.5 py-1.5 text-white placeholder:text-zinc-500 outline-none focus:border-amber-500" />
                               <input type="text" value={galleryFilters.tournament} onChange={(e) => setGalleryFilterVal('tournament', e.target.value)} placeholder="Torneo" className="w-full bg-[#18181f] border border-[#2c2c38] rounded-lg px-2.5 py-1.5 text-white placeholder:text-zinc-500 outline-none focus:border-amber-500" />
                               <input type="text" value={galleryFilters.currentClub} onChange={(e) => setGalleryFilterVal('currentClub', e.target.value)} placeholder="Club attuale" className="w-full bg-[#18181f] border border-[#2c2c38] rounded-lg px-2.5 py-1.5 text-white placeholder:text-zinc-500 outline-none focus:border-amber-500" />
@@ -3631,26 +3665,32 @@ export default function App() {
                           )}
                         </div>
 
-                        <div className="bg-[#121216] border border-[#2a2a32] rounded-xl p-3">
-                          <button type="button" onClick={() => toggleGalleryGroup('COLLEZIONABILI')} className="w-full flex items-center justify-between text-[11px] font-black uppercase tracking-wider text-zinc-200 cursor-pointer">
+                        <div
+                          onClick={() => toggleGalleryGroup('COLLEZIONABILI')}
+                          className="bg-[#121216] border border-[#2a2a32] hover:border-amber-500/50 rounded-xl p-3 cursor-pointer transition-colors"
+                        >
+                          <div className="w-full flex items-center justify-between text-[11px] font-black uppercase tracking-wider text-zinc-200 select-none">
                             <span>COLLEZIONABILI</span>
                             <span>{galleryOpenGroups.COLLEZIONABILI ? '▲' : '▼'}</span>
-                          </button>
+                          </div>
                           {galleryOpenGroups.COLLEZIONABILI && (
-                            <div className="mt-2.5 space-y-2 text-xs">
+                            <div onClick={(e) => e.stopPropagation()} className="mt-2.5 space-y-2 text-xs cursor-default">
                               <input type="text" value={galleryFilters.serialNumber} onChange={(e) => setGalleryFilterVal('serialNumber', e.target.value)} placeholder="Numero di serie" className="w-full bg-[#18181f] border border-[#2c2c38] rounded-lg px-2.5 py-1.5 text-white placeholder:text-zinc-500 outline-none focus:border-amber-500" />
                               <input type="number" value={galleryFilters.cardLevel} onChange={(e) => setGalleryFilterVal('cardLevel', e.target.value)} placeholder="Livello carta" className="w-full bg-[#18181f] border border-[#2c2c38] rounded-lg px-2.5 py-1.5 text-white placeholder:text-zinc-500 outline-none focus:border-amber-500" />
-                              <input type="text" value={galleryFilters.cardEdition} onChange={(e) => setGalleryFilterVal('cardEdition', e.target.value)} placeholder="Edizione carta" className="w-full bg-[#18181f] border border-[#2c2c38] rounded-lg px-2.5 py-1.5 text-white placeholder:text-zinc-500 outline-none focus:border-amber-500" />
+                              <input type="text" list="gallery-edition-list" value={galleryFilters.cardEdition} onChange={(e) => setGalleryFilterVal('cardEdition', e.target.value)} placeholder="Edizione carta" className="w-full bg-[#18181f] border border-[#2c2c38] rounded-lg px-2.5 py-1.5 text-white placeholder:text-zinc-500 outline-none focus:border-amber-500" />
+                              <datalist id="gallery-edition-list">
+                                <option value="Limited" />
+                                <option value="Rare" />
+                                <option value="Super Rare" />
+                                <option value="Unique" />
+                                <option value="In-Season" />
+                              </datalist>
                             </div>
                           )}
                         </div>
                       </div>
-                      <div className="mt-3">
-                        <button type="button" onClick={resetGalleryFilters} className="px-3 py-1.5 rounded-lg text-xs font-bold bg-[#18181f] border border-[#2c2c38] text-zinc-300 hover:text-white cursor-pointer">
-                          Reset parametri
-                        </button>
-                      </div>
-
+                      <div className="mt-3 w-full flex flex-wrap items-center gap-2">
+                        
                         <button
                           type="button"
                           onClick={() => setInSeasonOnly(!inSeasonOnly)}
@@ -3662,6 +3702,10 @@ export default function App() {
                         >
                           {inSeasonOnly ? '🟢 In-Season (Attivo)' : translations[currentLang]?.allSeasons || '⚪ Tutte le stagioni'}
                         </button>
+                        <button type="button" onClick={resetGalleryFilters} className="px-3 py-1.5 rounded-lg text-xs font-bold bg-[#18181f] border border-[#2c2c38] text-zinc-300 hover:text-white cursor-pointer ml-auto">
+                          Reset parametri
+                        </button></button>
+                      </div>
 
                         <button
                           type="button"
