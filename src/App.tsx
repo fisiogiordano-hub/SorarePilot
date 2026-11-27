@@ -3232,7 +3232,7 @@ export default function App() {
         currentLang={currentLang}
       />
 
-      <main className={`flex-1 min-w-0 px-8 pt-8 h-screen max-w-7xl mx-auto block ${activeTab === 'HOME' ? 'overflow-hidden pb-8' : 'overflow-y-auto custom-scrollbar pb-16'}`}>
+      <main className={`flex-1 min-w-0 px-6 sm:px-10 pt-8 h-screen max-w-[1440px] mx-auto block ${activeTab === 'HOME' ? 'overflow-hidden pb-8' : 'overflow-y-auto custom-scrollbar pb-16'}`}>
         {errorMessage && (
           <div className="bg-red-500/10 border border-red-500/30 text-red-400 p-4 rounded-xl flex items-center justify-between text-xs font-bold mb-4 shrink-0">
             <span>{errorMessage}</span>
@@ -3764,10 +3764,10 @@ export default function App() {
                           <p className="text-sm font-bold text-zinc-400">Nessuna carta corrisponde ai filtri selezionati.</p>
                         </div>
                       ) : (
-                        <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 gap-4">
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-5">
                           {sortedProCards.map((card: any) => (
                             <div key={card.id} className="bg-[#16161a] border border-[#2a2a32] p-3 rounded-2xl flex flex-col items-center space-y-2 shadow-lg">
-                              <div className="w-28 h-36 rounded-xl overflow-hidden bg-black/40 border border-zinc-800 flex items-center justify-center relative">
+                              <div className="w-full max-w-[152px] aspect-[3/4] rounded-xl overflow-hidden bg-black/40 border border-zinc-800 flex items-center justify-center relative p-1">
                                 <img src={card.pictureUrl} alt={card.name} className="w-full h-full object-contain" />
                               </div>
                               <div className="text-center w-full">
