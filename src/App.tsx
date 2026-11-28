@@ -115,12 +115,15 @@ const NotificationBell: React.FC<{
   onClearNotifications: () => void;
   currentLang?: 'IT' | 'EN' | 'FR' | 'ES';
 }> = ({ audioActive, notifications, onClearNotifications, currentLang = 'IT' }) => {
+  void audioActive; void notifications; void onClearNotifications;
+  void audioActive; void notifications; void onClearNotifications;
   const t = (key: string) => translations[currentLang]?.[key] || key;
   const [isOpen, setIsOpen] = useState(false);
   const count = notifications.length;
   const hasNotifications = count > 0;
 
   useEffect(() => {
+    void notifications;
     if (!hasNotifications && isOpen) {
       setIsOpen(false);
     }
@@ -255,6 +258,7 @@ export const AssistenzaModule: React.FC<{
   onClearNotifications: () => void;
   currentLang?: 'IT' | 'EN' | 'FR' | 'ES';
 }> = ({ audioActive, notifications, onClearNotifications, currentLang = 'IT' }) => {
+  void audioActive; void notifications; void onClearNotifications;
   const t = (key: string) => translations[currentLang]?.[key] || key;
 
   const supportLinks = [
@@ -336,6 +340,7 @@ export const CommunityModule: React.FC<{
   onClearNotifications: () => void;
   currentLang?: 'IT' | 'EN' | 'FR' | 'ES';
 }> = ({ audioActive, notifications, onClearNotifications, currentLang = 'IT' }) => {
+  void audioActive; void notifications; void onClearNotifications;
   const t = (key: string) => translations[currentLang]?.[key] || key;
 
   const communityLinks = [
@@ -417,6 +422,7 @@ export const LiveModule: React.FC<{
   onClearNotifications: () => void;
   currentLang?: 'IT' | 'EN' | 'FR' | 'ES';
 }> = ({ audioActive, notifications, onClearNotifications, currentLang = 'IT' }) => {
+  void audioActive; void notifications; void onClearNotifications;
   const t = (key: string) => translations[currentLang]?.[key] || key;
 
   return (
@@ -451,18 +457,19 @@ interface SettingModuleProps {
 }
 
 export const SettingModule: React.FC<SettingModuleProps> = ({ 
-  _audioActive, 
+  audioActive, 
   onToggleAudio,
   musicActive,
   onToggleMusic,
   cards, 
   accountName, 
   onLogout, 
-  _notifications, 
-  _onClearNotifications,
+  notifications, 
+  onClearNotifications,
   currentLang,
   onLanguageChange
 }) => {
+  void audioActive; void notifications; void onClearNotifications;
   const t = (key: string) => translations[currentLang]?.[key] || key;
 
   const [alertActive, setAlertActive] = useState<boolean>(() => localStorage.getItem('sorare_alerts') !== 'false');
@@ -717,12 +724,12 @@ export const HomeModule: React.FC<{
   user, 
   currentUser, 
   isSyncing, 
-  _audioActive, 
+  audioActive, 
   onToggleAudio, 
   musicActive,
   onToggleMusic,
-  _notifications, 
-  _onClearNotifications,
+  notifications, 
+  onClearNotifications,
   currentLang = 'IT',
   setCurrentLang
 }) => {
@@ -793,6 +800,7 @@ export const HomeModule: React.FC<{
   };
 
   const updateCircleHoverFromPoint = (clientX: number, clientY: number) => {
+    void audioActive;
     const el = circleRef.current;
     if (!el) return;
     const rect = el.getBoundingClientRect();
@@ -1075,7 +1083,7 @@ export const HomeModule: React.FC<{
           onMouseEnter={() => { if (audioActive) sounds.playHover(); }}
           onClick={handleAudioToggle}
           className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all shadow-none cursor-pointer border-2 ${
-            _audioActive 
+            audioActive 
               ? 'bg-[#16161a] hover:bg-[#202028] border-amber-500/50 text-amber-400 shadow-none' 
               : 'bg-[#16161a] hover:bg-[#202028] border-zinc-800 text-zinc-500 hover:text-zinc-300'
           }`}
@@ -1613,6 +1621,7 @@ const SetModule: React.FC<{
   onClearNotifications: () => void;
   currentLang?: 'IT' | 'EN' | 'FR' | 'ES';
 }> = ({ cards, audioActive, notifications, onClearNotifications, currentLang = 'IT' }) => {
+  void audioActive; void notifications; void onClearNotifications;
   const t = (key: string) => translations[currentLang]?.[key] || key;
 
   return (
@@ -1660,11 +1669,12 @@ const DailyMissionsModule: React.FC<DailyMissionsModuleProps> = ({
   missions, 
   setMissions, 
   token, 
-  _audioActive, 
-  _notifications, 
-  _onClearNotifications,
+  audioActive, 
+  notifications, 
+  onClearNotifications,
   currentLang = 'IT'
 }) => {
+  void audioActive; void notifications; void onClearNotifications;
   const t = (key: string) => translations[currentLang]?.[key] || translations['IT']?.[key] || key;
 
   const [activeSubTab, setActiveSubTab] = useState<'DAILY' | 'COLLECTION'>('DAILY');
@@ -1802,6 +1812,7 @@ const DailyMissionsModule: React.FC<DailyMissionsModuleProps> = ({
     } catch (err: any) { setSubmitStatus('Error: ' + err.message); } finally { setIsSubmitting(false); }
   };
   const handleClearAllMissions = () => {
+    void audioActive;
     setMissions((prev) =>
       prev.map((mission) => ({
         ...mission,
@@ -2147,6 +2158,7 @@ const LineupsModule: React.FC<{
   currentLang?: 'IT' | 'EN' | 'FR' | 'ES';
   setActiveTab: (tab: PilotTab) => void;
 }> = ({ cards, audioActive, notifications, onClearNotifications, currentLang = 'IT', setActiveTab }) => {
+  void audioActive; void notifications; void onClearNotifications;
   const t = (key: string) => translations[currentLang]?.[key] || translations['IT']?.[key] || key;
   const [lineupSubTab, setLineupSubTab] = useState<'IN_SEASON' | 'CLASSIC' | 'ROOMS' | 'HOTSTREAKS'>('ROOMS');
 
@@ -2300,6 +2312,7 @@ interface SellingModuleProps {
 }
 
 const SellingModule: React.FC<SellingModuleProps> = ({ cards, audioActive, notifications, onClearNotifications, currentLang = 'IT' }) => {
+  void onClearNotifications;
   const t = (key: string) => translations[currentLang]?.[key] || translations['IT']?.[key] || key;
 
   type SellFilterCategory = 'UNSOLD' | 'OVER_30' | 'CAPITAL_GAIN' | 'DUPLICATES' | 'WITH_X';
@@ -2319,6 +2332,7 @@ const SellingModule: React.FC<SellingModuleProps> = ({ cards, audioActive, notif
     .map((txt: string) => txt.toLowerCase());
 
   const expiredCards = proCards.filter((c: any) => {
+    void notifications;
     const statusVal = String(
       c?.listingStatus || c?.saleStatus || c?.offerStatus || c?.status || ''
     ).toUpperCase().trim();
@@ -2832,6 +2846,7 @@ const CraftModule: React.FC<{
   onClearNotifications: () => void;
   currentLang?: 'IT' | 'EN' | 'FR' | 'ES';
 }> = ({ audioActive, notifications, onClearNotifications, currentLang = 'IT' }) => {
+  void audioActive; void notifications; void onClearNotifications;
   const t = (key: string) => translations[currentLang]?.[key] || translations['IT']?.[key] || key;
 
   return (
@@ -2991,6 +3006,7 @@ const ScoutingModule: React.FC<{
   onClearNotifications: () => void;
   currentLang?: 'IT' | 'EN' | 'FR' | 'ES';
 }> = ({ audioActive, notifications, onClearNotifications, currentLang = 'IT' }) => {
+  void audioActive; void notifications; void onClearNotifications;
   const [preset, setPreset] = useState<'ALL' | 'VALUE' | 'NEXT_GW' | 'AUCTIONS'>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
   const [positionFilter, setPositionFilter] = useState<'ALL' | 'GK' | 'DEF' | 'MID' | 'FWD'>('ALL');
@@ -3242,7 +3258,7 @@ const GlobalTopRightBar: React.FC<{
   currentLang: 'IT' | 'EN' | 'FR' | 'ES';
 }> = ({
   t,
-  _audioActive,
+  audioActive,
   accountName,
   sorareAvatar,
   isSyncing,
@@ -3251,8 +3267,8 @@ const GlobalTopRightBar: React.FC<{
   onSyncClick,
   onSelectLive,
   onLogout,
-  _notifications,
-  _onClearNotifications,
+  notifications,
+  onClearNotifications,
   currentLang,
 }) => (
   <div className="flex items-center space-x-2.5 z-30">
@@ -3260,6 +3276,7 @@ const GlobalTopRightBar: React.FC<{
       type="button"
       onMouseEnter={() => { if (audioActive) sounds.playHover(); }}
       onClick={() => {
+        void notifications; void onClearNotifications;
         if (audioActive) sounds.playClick();
         onSelectLive();
       }}
@@ -3486,6 +3503,7 @@ export default function App() {
   const CONSTANT_MUSIC_VOLUME = 0.15;
 
   const applyConstantVolume = (audio: HTMLAudioElement | null) => {
+    void notifications;
     if (!audio) return;
     audio.volume = CONSTANT_MUSIC_VOLUME;
   };
@@ -3698,6 +3716,7 @@ export default function App() {
   };
 
   const handleToggleMusic = () => {
+    void audioActive;
     setMusicActive((prev) => !prev);
   };
 
