@@ -1636,8 +1636,8 @@ const SetModule: React.FC<{
   notifications: AppNotification[];
   onClearNotifications: () => void;
   currentLang?: 'IT' | 'EN' | 'FR' | 'ES';
-}> = ({ cards, audioActive, notifications, onClearNotifications, _currentLang = 'IT' }) => {
-  void notifications; void onClearNotifications;
+}> = ({ cards, audioActive, notifications, onClearNotifications, currentLang: _currentLang = 'IT' }) => {
+  void notifications; void _currentLang; void onClearNotifications;
   const [positionFilter, setPositionFilter] = useState<string>('ALL');
   const [searchQuery, setSearchQuery] = useState<string>('');
 
@@ -3118,6 +3118,7 @@ const ScoutingModule: React.FC<{
     const val = dict?.[key];
     return typeof val === 'string' ? val : '';
   };
+  void _t;
   const [preset, setPreset] = useState<'ALL' | 'VALUE' | 'NEXT_GW' | 'AUCTIONS'>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
   const [positionFilter, setPositionFilter] = useState<'ALL' | 'GK' | 'DEF' | 'MID' | 'FWD'>('ALL');
