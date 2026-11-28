@@ -3572,6 +3572,7 @@ export default function App() {
   })();
   const globalT = (key: string) => translations[currentLang]?.[key] || key;
   const _handleGlobalSync = () => {
+    void _handleGlobalSync;
     if (globalSyncing) return;
     if (audioActive) sounds.playClick();
     setGlobalSyncing(true);
@@ -3582,6 +3583,7 @@ export default function App() {
     }, 450);
   };
   const _handleGlobalLogout = () => {
+    void _handleGlobalLogout;
     setGlobalUserMenuOpen(false);
     try { localStorage.removeItem('sorare_account_name'); localStorage.removeItem('sorare_account'); localStorage.removeItem('sorare_token'); localStorage.removeItem('sorare_avatar'); } catch {}
   };
