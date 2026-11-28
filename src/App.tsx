@@ -115,6 +115,7 @@ const NotificationBell: React.FC<{
   onClearNotifications: () => void;
   currentLang?: 'IT' | 'EN' | 'FR' | 'ES';
 }> = ({ audioActive, notifications, onClearNotifications, currentLang = 'IT' }) => {
+  const t = (key: string): string => { const lang = (typeof currentLang !== 'undefined' && currentLang) ? currentLang : 'IT'; const dict: any = (translations as any)?.[lang] || (translations as any)?.IT || {}; return dict[key] ?? ''; };
   void audioActive; void notifications; void onClearNotifications;
   void audioActive; void notifications; void onClearNotifications;
   const [isOpen, setIsOpen] = useState(false);
@@ -258,6 +259,11 @@ export const AssistenzaModule: React.FC<{
   currentLang?: 'IT' | 'EN' | 'FR' | 'ES';
 }> = ({ audioActive, notifications, onClearNotifications, currentLang = 'IT' }) => {
   void audioActive; void notifications; void onClearNotifications;
+  const t = (key: string): string => {
+    const dict: any = (translations as any)?.[currentLang] || (translations as any)?.IT || {};
+    const val = dict?.[key];
+    return typeof val === 'string' ? val : '';
+  };
 
   const supportLinks = [
     {
@@ -339,6 +345,11 @@ export const CommunityModule: React.FC<{
   currentLang?: 'IT' | 'EN' | 'FR' | 'ES';
 }> = ({ audioActive, notifications, onClearNotifications, currentLang = 'IT' }) => {
   void audioActive; void notifications; void onClearNotifications;
+  const t = (key: string): string => {
+    const dict: any = (translations as any)?.[currentLang] || (translations as any)?.IT || {};
+    const val = dict?.[key];
+    return typeof val === 'string' ? val : '';
+  };
 
   const communityLinks = [
     {
@@ -420,6 +431,11 @@ export const LiveModule: React.FC<{
   currentLang?: 'IT' | 'EN' | 'FR' | 'ES';
 }> = ({ audioActive, notifications, onClearNotifications, currentLang = 'IT' }) => {
   void audioActive; void notifications; void onClearNotifications;
+  const t = (key: string): string => {
+    const dict: any = (translations as any)?.[currentLang] || (translations as any)?.IT || {};
+    const val = dict?.[key];
+    return typeof val === 'string' ? val : '';
+  };
 
   return (
     <div className="space-y-6 max-w-4xl mx-auto w-full">
@@ -466,6 +482,11 @@ export const SettingModule: React.FC<SettingModuleProps> = ({
   onLanguageChange
 }) => {
   void audioActive; void notifications; void onClearNotifications;
+  const t = (key: string): string => {
+    const dict: any = (translations as any)?.[currentLang] || (translations as any)?.IT || {};
+    const val = dict?.[key];
+    return typeof val === 'string' ? val : '';
+  };
 
   const [alertActive, setAlertActive] = useState<boolean>(() => localStorage.getItem('sorare_alerts') !== 'false');
 
@@ -751,6 +772,7 @@ export const HomeModule: React.FC<{
 
   // Gestione sicura della lingua attiva
   const activeLang = currentLang || (localStorage.getItem('sorare_lang') as any) || 'IT';
+  const t = (key: string): string => { const lang = (typeof currentLang !== 'undefined' && currentLang) ? currentLang : 'IT'; const dict: any = (translations as any)?.[lang] || (translations as any)?.IT || {}; return dict[key] ?? ''; };
 
   const handleLangChange = (lang: 'IT' | 'EN' | 'FR' | 'ES') => {
     localStorage.setItem('sorare_lang', lang);
@@ -899,7 +921,7 @@ export const HomeModule: React.FC<{
           title={t('goToMyClub') || 'Vai al tuo club'}
         >
           <ShieldCheck className="h-8 w-5" />
-          <span>{t('myClub') || 'MY CLUB'}</span>
+          <span>{t('myClub') || 'Il Mio Club'}</span>
         </button>
       </div>
 
@@ -1281,6 +1303,7 @@ interface SidebarProps {
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, accountName, audioActive, currentLang = 'IT' }) => {
+  const t = (key: string): string => { const lang = (typeof currentLang !== 'undefined' && currentLang) ? currentLang : 'IT'; const dict: any = (translations as any)?.[lang] || (translations as any)?.IT || {}; return dict[key] ?? ''; };
 
   const getItemStyle = (tab: PilotTab) => {
     return activeTab === tab
@@ -1619,10 +1642,23 @@ const SetModule: React.FC<{
   const [searchQuery, setSearchQuery] = useState<string>('');
 
   const setPoolCards = useMemo(() => {
-    return (cards || []).filter((card) => {
-      const r = String(card.rarity || '').toUpperCase();
-      return r === 'SET' || r === 'COMMON';
+    const proRarities = new Set(['LIMITED', 'RARE', 'SUPER_RARE', 'UNIQUE']);
+    const getCardBlob = (card: any) => [
+      card?.sport, card?.player?.sport, card?.league?.sport, card?.competition,
+      card?.league, card?.so5League?.displayName, card?.team, card?.club,
+      card?.player?.club?.name, card?.slug, card?.name
+    ].filter(Boolean).join(' ').toLowerCase();
+    const isFootballCard = (card: any) => {
+      const text = getCardBlob(card);
+      const pos = String(card?.position || card?.player?.position || '').toLowerCase();
+      return /football|soccer|calcio/.test(text) || ['goalkeeper', 'defender', 'midfielder', 'forward', 'gk', 'def', 'mid', 'fwd'].includes(pos);
+    };
+    const filtered = (cards || []).filter((card: any) => {
+      const r = String(card?.rarity || card?.scarcity || card?.edition || '').trim().toUpperCase();
+      if (proRarities.has(r)) return false;
+      return true;
     });
+    return [...filtered].sort((a: any, b: any) => Number(isFootballCard(b)) - Number(isFootballCard(a)));
   }, [cards]);
 
   const filteredSetCards = useMemo(() => {
@@ -1656,6 +1692,7 @@ const SetModule: React.FC<{
           Set ({setPoolCards.length})
         </div>
       </div>
+
 
       <div className="bg-[#16161a] border border-[#2a2a32] p-4 rounded-2xl flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
         <input
@@ -1691,16 +1728,16 @@ const SetModule: React.FC<{
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-5">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-5 px-3 sm:px-5">
           {filteredSetCards.map((card) => {
             const imgSrc = card.pictureUrl || card.imageUrl || 'https://images.sorare.com/cards/default.png';
             return (
               <div
                 key={String(card.id || card.slug || `${card.name}-${card.serialNumber ?? ''}`)}
                 onMouseEnter={() => { if (audioActive) sounds.playHover(); }}
-                className="bg-[#16161a] border border-[#2a2a32] p-2 rounded-2xl flex flex-col items-center space-y-1.5 shadow-lg"
+                className="bg-[#16161a] border border-[#2a2a32] p-3 rounded-2xl overflow-visible flex flex-col items-center space-y-1.5 shadow-lg"
               >
-                <div className="w-full max-w-[164px] aspect-[5/8] overflow-hidden flex items-center justify-center relative">
+                <div className="w-full max-w-[180px] aspect-[5/8] overflow-visible p-1 flex items-center justify-center relative">
                   <img
                     src={imgSrc}
                     alt={card.name}
@@ -3076,6 +3113,11 @@ const ScoutingModule: React.FC<{
   currentLang?: 'IT' | 'EN' | 'FR' | 'ES';
 }> = ({ audioActive, notifications, onClearNotifications, currentLang = 'IT' }) => {
   void audioActive; void notifications; void onClearNotifications;
+  const t = (key: string): string => {
+    const dict: any = (translations as any)?.[currentLang] || (translations as any)?.IT || {};
+    const val = dict?.[key];
+    return typeof val === 'string' ? val : '';
+  };
   const [preset, setPreset] = useState<'ALL' | 'VALUE' | 'NEXT_GW' | 'AUCTIONS'>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
   const [positionFilter, setPositionFilter] = useState<'ALL' | 'GK' | 'DEF' | 'MID' | 'FWD'>('ALL');
@@ -3701,7 +3743,7 @@ export default function App() {
   }, [accountName]);
 
   useEffect(() => {
-    const savedToken = localStorage.getItem('sorare_token');
+    const savedToken = localStorage.getItem('sorare_token') || localStorage.getItem('sorare_auth_token');
     const savedName = localStorage.getItem('sorare_account_name');
     const savedAvatar = localStorage.getItem('sorare_account_avatar') || '';
     if (savedToken && savedName && !accountName) {
@@ -3915,8 +3957,14 @@ export default function App() {
   };
 
   const handleManualSync = () => {
-    if (!token || isBackgroundSyncing) return;
-    syncAllCardsInBackground(token, false);
+    if (isBackgroundSyncing) return;
+    const activeToken = token || localStorage.getItem('sorare_token') || localStorage.getItem('sorare_auth_token') || '';
+    if (!activeToken) {
+      setErrorMessage('Token di sessione non trovato: effettua nuovamente l\'accesso con Sorare per sincronizzare le carte.');
+      return;
+    }
+    if (!token) setToken(activeToken);
+    syncAllCardsInBackground(activeToken, false);
   };
 
   return (
@@ -3939,12 +3987,12 @@ export default function App() {
               audioActive={Boolean(audioActive)}
               accountName={globalAccountName}
               sorareAvatar={accountAvatarUrl || globalSorareAvatar || null}
-              isSyncing={globalSyncing}
+              isSyncing={isBackgroundSyncing}
               userMenuOpen={globalUserMenuOpen}
               setUserMenuOpen={setGlobalUserMenuOpen}
-              onSyncClick={handleGlobalSync}
+              onSyncClick={handleManualSync}
               onSelectLive={() => setActiveTab('LIVE')}
-              onLogout={handleGlobalLogout}
+              onLogout={handleLogout}
               notifications={notifications}
               onClearNotifications={handleClearNotifications}
               currentLang={currentLang}
@@ -4490,8 +4538,8 @@ export default function App() {
                       ) : (
                         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-5">
                           {sortedProCards.map((card: any) => (
-                            <div key={card.id} className="bg-[#16161a] border border-[#2a2a32] p-2 rounded-2xl flex flex-col items-center space-y-1.5 shadow-lg">
-                              <div className="w-full max-w-[164px] aspect-[5/8] overflow-hidden flex items-center justify-center relative">
+                            <div key={card.id} className="bg-[#16161a] border border-[#2a2a32] p-3 rounded-2xl overflow-visible flex flex-col items-center space-y-1.5 shadow-lg">
+                              <div className="w-full max-w-[180px] aspect-[5/8] overflow-visible p-1 flex items-center justify-center relative">
                                 <img src={card.pictureUrl} alt={card.name} className="w-full h-full object-contain" />
                               </div>
                               <div className="text-center w-full">

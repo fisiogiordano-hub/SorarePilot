@@ -2,6 +2,8 @@ export type Lang = 'IT' | 'EN' | 'FR' | 'ES';
 
 export const translations: Record<Lang, Record<string, string>> = {
   IT: {
+    setFootballTab: "Calcio",
+    setNbaTab: "NBA",
     // Sidebar & Navigation
     home: "Home",
     missions: "Missioni",
@@ -155,6 +157,8 @@ export const translations: Record<Lang, Record<string, string>> = {
     welcomeMessage: "Bentornato a bordo, Pilota.",
   },
   EN: {
+    setFootballTab: "Football",
+    setNbaTab: "NBA",
     home: "Home",
     missions: "Missions",
     scouting: "Scouting",
@@ -298,6 +302,8 @@ export const translations: Record<Lang, Record<string, string>> = {
     welcomeMessage: "Welcome back aboard, Pilot.",
   },
   FR: {
+    setFootballTab: "Football",
+    setNbaTab: "NBA",
     home: "Accueil",
     missions: "Missions",
     scouting: "Scouting",
@@ -441,6 +447,8 @@ export const translations: Record<Lang, Record<string, string>> = {
     welcomeMessage: "Bon retour à bord, Pilote.",
   },
   ES: {
+    setFootballTab: "Fútbol",
+    setNbaTab: "NBA",
     home: "Inicio",
     missions: "Misiones",
     scouting: "Scouting",
