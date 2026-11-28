@@ -451,15 +451,15 @@ interface SettingModuleProps {
 }
 
 export const SettingModule: React.FC<SettingModuleProps> = ({ 
-  audioActive, 
+  _audioActive, 
   onToggleAudio,
   musicActive,
   onToggleMusic,
   cards, 
   accountName, 
   onLogout, 
-  notifications, 
-  onClearNotifications,
+  _notifications, 
+  _onClearNotifications,
   currentLang,
   onLanguageChange
 }) => {
@@ -717,12 +717,12 @@ export const HomeModule: React.FC<{
   user, 
   currentUser, 
   isSyncing, 
-  audioActive, 
+  _audioActive, 
   onToggleAudio, 
   musicActive,
   onToggleMusic,
-  notifications, 
-  onClearNotifications,
+  _notifications, 
+  _onClearNotifications,
   currentLang = 'IT',
   setCurrentLang
 }) => {
@@ -1075,7 +1075,7 @@ export const HomeModule: React.FC<{
           onMouseEnter={() => { if (audioActive) sounds.playHover(); }}
           onClick={handleAudioToggle}
           className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all shadow-none cursor-pointer border-2 ${
-            audioActive 
+            _audioActive 
               ? 'bg-[#16161a] hover:bg-[#202028] border-amber-500/50 text-amber-400 shadow-none' 
               : 'bg-[#16161a] hover:bg-[#202028] border-zinc-800 text-zinc-500 hover:text-zinc-300'
           }`}
@@ -1660,9 +1660,9 @@ const DailyMissionsModule: React.FC<DailyMissionsModuleProps> = ({
   missions, 
   setMissions, 
   token, 
-  audioActive, 
-  notifications, 
-  onClearNotifications,
+  _audioActive, 
+  _notifications, 
+  _onClearNotifications,
   currentLang = 'IT'
 }) => {
   const t = (key: string) => translations[currentLang]?.[key] || translations['IT']?.[key] || key;
@@ -2984,7 +2984,6 @@ const DEMO_SCOUT_PLAYERS: ScoutPlayerItem[] = [
   }
 ];
 
-const ScoutingMagnifierIcon: React.FC<{ className?: string }> = ({ className = 'h-5 w-5' }) => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className={className}>
     <circle cx="11" cy="11" r="7" />
     <line x1="21" y1="21" x2="16.65" y2="16.65" />
@@ -3248,7 +3247,7 @@ const GlobalTopRightBar: React.FC<{
   currentLang: 'IT' | 'EN' | 'FR' | 'ES';
 }> = ({
   t,
-  audioActive,
+  _audioActive,
   accountName,
   sorareAvatar,
   isSyncing,
@@ -3257,8 +3256,8 @@ const GlobalTopRightBar: React.FC<{
   onSyncClick,
   onSelectLive,
   onLogout,
-  notifications,
-  onClearNotifications,
+  _notifications,
+  _onClearNotifications,
   currentLang,
 }) => (
   <div className="flex items-center space-x-2.5 z-30">
