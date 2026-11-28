@@ -117,7 +117,6 @@ const NotificationBell: React.FC<{
 }> = ({ audioActive, notifications, onClearNotifications, currentLang = 'IT' }) => {
   void audioActive; void notifications; void onClearNotifications;
   void audioActive; void notifications; void onClearNotifications;
-  const t = (key: string) => translations[currentLang]?.[key] || key;
   const [isOpen, setIsOpen] = useState(false);
   const count = notifications.length;
   const hasNotifications = count > 0;
@@ -259,7 +258,6 @@ export const AssistenzaModule: React.FC<{
   currentLang?: 'IT' | 'EN' | 'FR' | 'ES';
 }> = ({ audioActive, notifications, onClearNotifications, currentLang = 'IT' }) => {
   void audioActive; void notifications; void onClearNotifications;
-  const t = (key: string) => translations[currentLang]?.[key] || key;
 
   const supportLinks = [
     {
@@ -341,7 +339,6 @@ export const CommunityModule: React.FC<{
   currentLang?: 'IT' | 'EN' | 'FR' | 'ES';
 }> = ({ audioActive, notifications, onClearNotifications, currentLang = 'IT' }) => {
   void audioActive; void notifications; void onClearNotifications;
-  const t = (key: string) => translations[currentLang]?.[key] || key;
 
   const communityLinks = [
     {
@@ -423,7 +420,6 @@ export const LiveModule: React.FC<{
   currentLang?: 'IT' | 'EN' | 'FR' | 'ES';
 }> = ({ audioActive, notifications, onClearNotifications, currentLang = 'IT' }) => {
   void audioActive; void notifications; void onClearNotifications;
-  const t = (key: string) => translations[currentLang]?.[key] || key;
 
   return (
     <div className="space-y-6 max-w-4xl mx-auto w-full">
@@ -470,7 +466,6 @@ export const SettingModule: React.FC<SettingModuleProps> = ({
   onLanguageChange
 }) => {
   void audioActive; void notifications; void onClearNotifications;
-  const t = (key: string) => translations[currentLang]?.[key] || key;
 
   const [alertActive, setAlertActive] = useState<boolean>(() => localStorage.getItem('sorare_alerts') !== 'false');
 
@@ -733,7 +728,6 @@ export const HomeModule: React.FC<{
   currentLang = 'IT',
   setCurrentLang
 }) => {
-  const t = (key: string) => translations[currentLang]?.[key] || key;
 
   const [showSyncSuccess, setShowSyncSuccess] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
@@ -1138,7 +1132,7 @@ export const HomeModule: React.FC<{
                 src="/logo.png" 
                 alt="SorarePilot Logo" 
                 className="w-full h-full object-cover scale-105 pointer-events-none"
-                style={{ filter: 'drop-shadow(0 0 18px rgba(91, 94, 226, 0.65))' }}
+                style={{ filter: 'drop-shadow(0 0 18px rgba(99, 102, 241, 0.65)) brightness(1.1) contrast(1.05)' }}
                 onError={(e) => { e.currentTarget.style.display = 'none'; }}
               />
             </a>
@@ -1170,7 +1164,7 @@ export const HomeModule: React.FC<{
                 src="/title.png" 
                 alt="SorarePilot Title" 
                 className="max-w-[650px] sm:max-w-[850px] object-contain h-auto relative z-10 pointer-events-none"
-                style={{ imageRendering: "auto", filter: "brightness(1.3) contrast(1.1)" }}
+                style={{ imageRendering: "auto", filter: "brightness(1.5) contrast(1.1)" }}
                 onError={(e) => { e.currentTarget.style.display = 'none'; }}
               />
             </a>
@@ -1287,7 +1281,6 @@ interface SidebarProps {
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, accountName, audioActive, currentLang = 'IT' }) => {
-  const t = (key: string) => translations[currentLang]?.[key] || key;
 
   const getItemStyle = (tab: PilotTab) => {
     return activeTab === tab
@@ -1322,7 +1315,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, accountName,
                 if (audioActive) sounds.playClick();
     setActiveTab('HOME');
               }}
-              className="flex flex-col items-center cursor-pointer p-1 rounded-2xl transition-all hover:scale-105"
+              className="flex flex-col items-center cursor-pointer p-1 rounded-2xl transition-all w-full origin-center hover:scale-105"
             >
               {/* Cerchio con bordo bianco/argento e glow identico alla Home */}
               <div 
@@ -1621,34 +1614,110 @@ const SetModule: React.FC<{
   onClearNotifications: () => void;
   currentLang?: 'IT' | 'EN' | 'FR' | 'ES';
 }> = ({ cards, audioActive, notifications, onClearNotifications, currentLang = 'IT' }) => {
-  void audioActive; void notifications; void onClearNotifications;
-  const t = (key: string) => translations[currentLang]?.[key] || key;
+  void notifications; void onClearNotifications;
+  const [positionFilter, setPositionFilter] = useState<string>('ALL');
+  const [searchQuery, setSearchQuery] = useState<string>('');
+
+  const setPoolCards = useMemo(() => {
+    return (cards || []).filter((card) => {
+      const r = String(card.rarity || '').toUpperCase();
+      return r === 'SET' || r === 'COMMON';
+    });
+  }, [cards]);
+
+  const filteredSetCards = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    return setPoolCards.filter((card) => {
+      if (positionFilter !== 'ALL' && String(card.position || '') !== positionFilter) return false;
+      if (q) {
+        const hay = `${card.name || ''} ${card.team || ''} ${card.position || ''} ${card.serialNumber ?? ''}`.toLowerCase();
+        if (!hay.includes(q)) return false;
+      }
+      return true;
+    });
+  }, [setPoolCards, positionFilter, searchQuery]);
 
   return (
     <div className="space-y-6 w-full">
-      <div className="flex justify-end items-center mb-2">
-      </div>
-      <div className="bg-[#16161a] border border-[#2a2a32] p-8 rounded-2xl flex items-center space-x-4 text-white shadow-md">
-        <div className="w-14 h-14 rounded-2xl bg-[#16161a] border border-[#2a2a32] flex items-center justify-center shadow-xl shrink-0">
-          <span className="text-xs bg-white text-black px-2 py-0.5 rounded font-black leading-tight">SET</span>
+      <div className="bg-[#16161a] border border-[#2a2a32] p-6 sm:p-8 rounded-2xl flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 text-white shadow-md">
+        <div className="flex items-center space-x-4">
+          <div className="w-14 h-14 rounded-2xl bg-[#16161a] border border-[#2a2a32] flex items-center justify-center shadow-xl shrink-0">
+            <span className="text-xs bg-white text-black px-2 py-0.5 rounded font-black leading-tight">SET</span>
+          </div>
+          <div>
+            <h2 className="text-2xl font-bold">Set</h2>
+            <p className="text-xs text-zinc-400 mt-0.5">
+              {`Carte Set dell'account: ${filteredSetCards.length} mostrate su ${setPoolCards.length} (${cards.length} carte totali in galleria).`}
+            </p>
+          </div>
         </div>
-        <div>
-          <h2 className="text-2xl font-bold">{t('setCardsManagement') || 'Gestione Carte Set'}</h2>
-          <p className="text-xs text-zinc-400 mt-0.5">
-            {t('setCardsSubtitle')?.replace('{count}', String(cards.length)) || `Visualizza e gestisci le tue carte Set e Common (${cards.length} totali in galleria).`}
-          </p>
+
+        <div className="px-4 py-2 rounded-xl bg-[#0e0e12] border border-[#282834] text-xs font-black uppercase tracking-wider text-zinc-200 self-start sm:self-auto">
+          Set ({setPoolCards.length})
         </div>
       </div>
 
-      <div className="bg-[#16161a] border border-[#2a2a32] p-16 rounded-2xl flex flex-col items-center justify-center text-center shadow-md space-y-3">
-        <div className="w-16 h-16 rounded-2xl bg-white/10 text-white border border-white/20 flex items-center justify-center text-2xl font-black shadow-[0_0_3px_rgba(255,255,255,0.25)]">
-          ⏳
-        </div>
-        <h3 className="text-xl font-black text-white uppercase tracking-wider">{t('setCardsManagement') || 'Gestione Carte Set'}</h3>
-        <p className="text-sm font-bold text-zinc-300 uppercase tracking-widest bg-white/5 px-4 py-1.5 rounded-full border border-white/10">
-          {t('comingSoon') || 'Coming Soon'}
-        </p>
+      <div className="bg-[#16161a] border border-[#2a2a32] p-4 rounded-2xl flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
+        <input
+          type="text"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          placeholder="Cerca giocatore, club o seriale nel set..."
+          className="flex-1 bg-[#0e0e12] border border-[#282834] focus:border-indigo-500 rounded-xl px-4 py-2.5 text-xs text-white placeholder-zinc-500 outline-none"
+        />
+        <select
+          value={positionFilter}
+          onChange={(e) => { if (audioActive) sounds.playClick(); setPositionFilter(e.target.value); }}
+          className="bg-[#0e0e12] border border-[#282834] focus:border-indigo-500 rounded-xl px-3.5 py-2.5 text-xs font-bold text-zinc-200 outline-none cursor-pointer"
+        >
+          <option value="ALL">Tutte le posizioni</option>
+          <option value="Goalkeeper">Goalkeeper</option>
+          <option value="Defender">Defender</option>
+          <option value="Midfielder">Midfielder</option>
+          <option value="Forward">Forward</option>
+        </select>
       </div>
+
+      {filteredSetCards.length === 0 ? (
+        <div className="bg-[#16161a] border border-[#2a2a32] p-14 rounded-2xl flex flex-col items-center justify-center text-center shadow-md space-y-2.5">
+          <div className="w-14 h-14 rounded-2xl bg-white/5 text-zinc-300 border border-white/10 flex items-center justify-center text-xs font-black uppercase">
+            SET
+          </div>
+          <h3 className="text-lg font-black text-white">Nessuna carta del set trovata</h3>
+          <p className="text-xs text-zinc-400 max-w-md">
+            {setPoolCards.length === 0
+              ? "Non ci sono carte Set sincronizzate per questo account."
+              : "Nessuna carta corrisponde ai filtri selezionati. Prova ad azzerare la ricerca o il filtro posizione."}
+          </p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-5">
+          {filteredSetCards.map((card) => {
+            const imgSrc = card.pictureUrl || card.imageUrl || 'https://images.sorare.com/cards/default.png';
+            return (
+              <div
+                key={String(card.id || card.slug || `${card.name}-${card.serialNumber ?? ''}`)}
+                onMouseEnter={() => { if (audioActive) sounds.playHover(); }}
+                className="bg-[#16161a] border border-[#2a2a32] p-2 rounded-2xl flex flex-col items-center space-y-1.5 shadow-lg"
+              >
+                <div className="w-full max-w-[164px] aspect-[5/8] overflow-hidden flex items-center justify-center relative">
+                  <img
+                    src={imgSrc}
+                    alt={card.name}
+                    loading="lazy"
+                    className="w-full h-full object-contain"
+                    onError={(e) => { e.currentTarget.src = 'https://images.sorare.com/cards/default.png'; }}
+                  />
+                </div>
+                <div className="text-center w-full">
+                  <p className="text-xs font-black text-white truncate">{card.name}</p>
+                  <p className="text-[10px] text-zinc-400">{card.position} | L10: {card.l10Average}</p>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 };
