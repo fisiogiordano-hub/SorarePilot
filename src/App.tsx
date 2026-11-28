@@ -1636,7 +1636,7 @@ const SetModule: React.FC<{
   notifications: AppNotification[];
   onClearNotifications: () => void;
   currentLang?: 'IT' | 'EN' | 'FR' | 'ES';
-}> = ({ cards, audioActive, notifications, onClearNotifications, currentLang = 'IT' }) => {
+}> = ({ cards, audioActive, notifications, onClearNotifications, _currentLang = 'IT' }) => {
   void notifications; void onClearNotifications;
   const [positionFilter, setPositionFilter] = useState<string>('ALL');
   const [searchQuery, setSearchQuery] = useState<string>('');
@@ -3113,7 +3113,7 @@ const ScoutingModule: React.FC<{
   currentLang?: 'IT' | 'EN' | 'FR' | 'ES';
 }> = ({ audioActive, notifications, onClearNotifications, currentLang = 'IT' }) => {
   void audioActive; void notifications; void onClearNotifications;
-  const t = (key: string): string => {
+  const _t = (key: string): string => {
     const dict: any = (translations as any)?.[currentLang] || (translations as any)?.IT || {};
     const val = dict?.[key];
     return typeof val === 'string' ? val : '';
@@ -3570,7 +3570,7 @@ export default function App() {
     }
   })();
   const globalT = (key: string) => translations[currentLang]?.[key] || key;
-  const handleGlobalSync = () => {
+  const _handleGlobalSync = () => {
     if (globalSyncing) return;
     if (audioActive) sounds.playClick();
     setGlobalSyncing(true);
@@ -3580,7 +3580,7 @@ export default function App() {
       setTimeout(() => setGlobalSyncSuccess(false), 2000);
     }, 450);
   };
-  const handleGlobalLogout = () => {
+  const _handleGlobalLogout = () => {
     setGlobalUserMenuOpen(false);
     try { localStorage.removeItem('sorare_account_name'); localStorage.removeItem('sorare_account'); localStorage.removeItem('sorare_token'); localStorage.removeItem('sorare_avatar'); } catch {}
   };
