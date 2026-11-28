@@ -1,5 +1,5 @@
 ﻿import { playInsertCoinReady, formatInsertCoinReady } from './retroCue';
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useMemo, useState, useEffect, useRef } from 'react';
 import { 
   Users, 
   RefreshCw, 
@@ -291,7 +291,6 @@ export const AssistenzaModule: React.FC<{
   return (
     <div className="space-y-6 max-w-4xl mx-auto w-full">
       <div className="flex justify-end items-center mb-2">
-        <NotificationBell audioActive={audioActive} notifications={notifications} onClearNotifications={onClearNotifications} currentLang={currentLang} />
       </div>
       <div className="bg-[#16161a] border border-[#2a2a32] p-8 rounded-2xl flex items-center space-x-4 text-white shadow-md">
         <div className="w-14 h-14 rounded-2xl bg-[#16161a] border border-[#2a2a32] flex items-center justify-center shadow-xl shrink-0">
@@ -373,7 +372,6 @@ export const CommunityModule: React.FC<{
   return (
     <div className="space-y-6 max-w-4xl mx-auto w-full">
       <div className="flex justify-end items-center mb-2">
-        <NotificationBell audioActive={audioActive} notifications={notifications} onClearNotifications={onClearNotifications} currentLang={currentLang} />
       </div>
       <div className="bg-[#16161a] border border-[#2a2a32] p-8 rounded-2xl flex items-center space-x-4 text-white shadow-md">
         <div className="w-14 h-14 rounded-2xl bg-[#16161a] border border-[#2a2a32] flex items-center justify-center shadow-xl shrink-0">
@@ -424,7 +422,6 @@ export const LiveModule: React.FC<{
   return (
     <div className="space-y-6 max-w-4xl mx-auto w-full">
       <div className="flex justify-end items-center mb-2">
-        <NotificationBell audioActive={audioActive} notifications={notifications} onClearNotifications={onClearNotifications} currentLang={currentLang} />
       </div>
       <div className="bg-[#16161a] border border-[#2a2a32] p-16 rounded-2xl flex flex-col items-center justify-center text-center shadow-md space-y-3">
         <div className="w-16 h-16 rounded-2xl bg-red-500/20 text-red-400 border border-red-500/30 flex items-center justify-center shadow-[0_0_3px_rgba(239,68,68,0.35)]">
@@ -504,7 +501,6 @@ export const SettingModule: React.FC<SettingModuleProps> = ({
   return (
     <div className="space-y-6 max-w-4xl mx-auto w-full">
       <div className="flex justify-end items-center mb-2">
-        <NotificationBell audioActive={audioActive} notifications={notifications} onClearNotifications={onClearNotifications} currentLang={currentLang} />
       </div>
       <div className="bg-[#16161a] border border-[#2a2a32] p-8 rounded-2xl flex items-center space-x-4 text-white shadow-md">
         <div className="w-14 h-14 rounded-2xl bg-[#16161a] border border-[#2a2a32] flex items-center justify-center shadow-xl shrink-0">
@@ -916,10 +912,10 @@ export const HomeModule: React.FC<{
             if (audioActive) sounds.playClick();
             setActiveTab('LIVE');
           }}
-          className="px-4 h-12 rounded-2xl flex items-center space-x-2 bg-red-600/90 hover:bg-red-600 text-white font-black text-xs uppercase tracking-wider transition-all shadow-[0_0_4px_rgba(239,68,68,0.3)] border-2 border-red-500 hover:border-red-400 cursor-pointer relative group"
+      className="px-4 h-12 rounded-2xl flex items-center space-x-2 bg-red-600/90 hover:bg-red-600 text-white font-black text-xs uppercase tracking-wider transition-all border-2 border-red-500 hover:border-red-400 active:shadow-[0_0_18px_rgba(239,68,68,0.75)] active:scale-95 cursor-pointer relative group"
           title={t('liveScoresTitle') || 'Segui i punteggi in diretta'}
         >
-          <span className="w-2.5 h-2.5 rounded-full bg-white shrink-0"></span>
+      <span className="w-2.5 h-2.5 rounded-full bg-white shrink-0"></span>
           <span className="tracking-widest">{t('live') || 'LIVE'}</span>
         </button>
 
@@ -937,12 +933,13 @@ export const HomeModule: React.FC<{
           </button>
         )}
 
-        <NotificationBell 
-          audioActive={audioActive} 
-          notifications={notifications} 
-          onClearNotifications={onClearNotifications} 
+        <NotificationBell
+          audioActive={Boolean(audioActive)}
+          notifications={notifications}
+          onClearNotifications={onClearNotifications}
           currentLang={currentLang}
         />
+
 
         {accountName && (
           <div className="relative">
@@ -1621,7 +1618,6 @@ const SetModule: React.FC<{
   return (
     <div className="space-y-6 w-full">
       <div className="flex justify-end items-center mb-2">
-        <NotificationBell audioActive={audioActive} notifications={notifications} onClearNotifications={onClearNotifications} currentLang={currentLang} />
       </div>
       <div className="bg-[#16161a] border border-[#2a2a32] p-8 rounded-2xl flex items-center space-x-4 text-white shadow-md">
         <div className="w-14 h-14 rounded-2xl bg-[#16161a] border border-[#2a2a32] flex items-center justify-center shadow-xl shrink-0">
@@ -1870,7 +1866,6 @@ const DailyMissionsModule: React.FC<DailyMissionsModuleProps> = ({
   return (
     <div className="space-y-6 w-full">
       <div className="flex justify-end items-center mb-2">
-        <NotificationBell audioActive={audioActive} notifications={notifications} onClearNotifications={onClearNotifications} currentLang={currentLang} />
       </div>
       <div className="bg-[#16161a] border border-[#2a2a32] p-8 rounded-2xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 shadow-md">
         <div className="flex items-center space-x-4">
@@ -2158,7 +2153,6 @@ const LineupsModule: React.FC<{
   return (
     <div className="space-y-6 w-full">
       <div className="flex justify-end items-center mb-2">
-        <NotificationBell audioActive={audioActive} notifications={notifications} onClearNotifications={onClearNotifications} currentLang={currentLang} />
       </div>
       <div className="bg-[#16161a] border border-[#2a2a32] p-8 rounded-2xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 shadow-md">
         <div className="flex items-center space-x-4">
@@ -2592,7 +2586,6 @@ const SellingModule: React.FC<SellingModuleProps> = ({ cards, audioActive, notif
   return (
     <div className="space-y-6 w-full px-1">
       <div className="flex justify-end items-center mb-2">
-        <NotificationBell audioActive={audioActive} notifications={notifications} onClearNotifications={onClearNotifications} currentLang={currentLang} />
       </div>
       <div className="bg-[#16161a] border border-[#2a2a32] p-8 rounded-2xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 shadow-md">
         <div className="flex items-center space-x-4">
@@ -2844,7 +2837,6 @@ const CraftModule: React.FC<{
   return (
     <div className="space-y-6 w-full">
       <div className="flex justify-end items-center mb-2">
-        <NotificationBell audioActive={audioActive} notifications={notifications} onClearNotifications={onClearNotifications} currentLang={currentLang} />
       </div>
       <div className="bg-[#16161a] border border-[#2a2a32] p-8 rounded-2xl flex items-center space-x-4 text-white shadow-md">
         <div className="w-14 h-14 rounded-2xl bg-[#16161a] border border-[#2a2a32] flex items-center justify-center shadow-xl shrink-0">
@@ -2871,6 +2863,496 @@ const CraftModule: React.FC<{
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
 const REDIRECT_URI = import.meta.env.VITE_REDIRECT_URI || window.location.origin;
+
+interface ScoutPlayerItem {
+  id: string;
+  name: string;
+  position: 'GK' | 'DEF' | 'MID' | 'FWD';
+  age: number;
+  club: string;
+  league: string;
+  status: 'TITOLARE' | 'IN ROTAZIONE';
+  gwFixture: string;
+  l10Avg: number;
+  nextGwScore: number;
+  valueRatio: number;
+  priceEur: number;
+  isAuction: boolean;
+  auctionEndsIn?: string;
+  trendBars: number[];
+}
+
+const DEMO_SCOUT_PLAYERS: ScoutPlayerItem[] = [
+  {
+    id: 'sp-1',
+    name: 'Massire Sylla',
+    position: 'DEF',
+    age: 21,
+    club: 'USG',
+    league: 'Jupiler Pro League',
+    status: 'TITOLARE',
+    gwFixture: 'GW vs GNT · 78%',
+    l10Avg: 68.4,
+    nextGwScore: 74.2,
+    valueRatio: 9.4,
+    priceEur: 7.9,
+    isAuction: true,
+    auctionEndsIn: '01h 42m',
+    trendBars: [45, 62, 58, 74, 81, 66, 79, 85, 72, 88]
+  },
+  {
+    id: 'sp-2',
+    name: 'Matteo Prati',
+    position: 'MID',
+    age: 22,
+    club: 'Cagliari',
+    league: 'Serie A',
+    status: 'TITOLARE',
+    gwFixture: 'GW vs LEC · 84%',
+    l10Avg: 65.1,
+    nextGwScore: 72.8,
+    valueRatio: 9.1,
+    priceEur: 8.0,
+    isAuction: false,
+    trendBars: [50, 55, 63, 60, 70, 68, 75, 71, 78, 74]
+  },
+  {
+    id: 'sp-3',
+    name: 'Noah Darvich',
+    position: 'MID',
+    age: 20,
+    club: 'Barcelona Atlètic',
+    league: 'LaLiga / Squadre',
+    status: 'IN ROTAZIONE',
+    gwFixture: 'GW vs CEL · 62%',
+    l10Avg: 61.8,
+    nextGwScore: 69.5,
+    valueRatio: 8.8,
+    priceEur: 7.9,
+    isAuction: true,
+    auctionEndsIn: '03h 15m',
+    trendBars: [40, 48, 52, 59, 64, 57, 68, 72, 66, 73]
+  },
+  {
+    id: 'sp-4',
+    name: 'Lucas Bergvall',
+    position: 'MID',
+    age: 20,
+    club: 'Tottenham',
+    league: 'Premier League',
+    status: 'TITOLARE',
+    gwFixture: 'GW vs BOU · 81%',
+    l10Avg: 71.2,
+    nextGwScore: 77.6,
+    valueRatio: 7.6,
+    priceEur: 10.2,
+    isAuction: false,
+    trendBars: [58, 64, 70, 66, 76, 74, 80, 77, 83, 81]
+  },
+  {
+    id: 'sp-5',
+    name: 'Koki Ogawa',
+    position: 'FWD',
+    age: 29,
+    club: 'NEC Nijmegen',
+    league: 'Eredivisie',
+    status: 'TITOLARE',
+    gwFixture: 'GW vs PEC · 79%',
+    l10Avg: 66.7,
+    nextGwScore: 75.4,
+    valueRatio: 8.9,
+    priceEur: 8.5,
+    isAuction: true,
+    auctionEndsIn: '00h 54m',
+    trendBars: [52, 49, 68, 73, 55, 79, 64, 82, 71, 84]
+  },
+  {
+    id: 'sp-6',
+    name: 'Lucas Chevalier',
+    position: 'GK',
+    age: 24,
+    club: 'LOSC Lille',
+    league: 'Ligue 1',
+    status: 'TITOLARE',
+    gwFixture: 'GW vs STR · 86%',
+    l10Avg: 69.0,
+    nextGwScore: 76.1,
+    valueRatio: 8.2,
+    priceEur: 9.3,
+    isAuction: false,
+    trendBars: [60, 65, 62, 72, 70, 75, 69, 78, 74, 80]
+  }
+];
+
+const ScoutingMagnifierIcon: React.FC<{ className?: string }> = ({ className = 'h-5 w-5' }) => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <circle cx="11" cy="11" r="7" />
+    <line x1="21" y1="21" x2="16.65" y2="16.65" />
+  </svg>
+);
+
+const ScoutingModule: React.FC<{
+  audioActive: boolean;
+  notifications: AppNotification[];
+  onClearNotifications: () => void;
+  currentLang?: 'IT' | 'EN' | 'FR' | 'ES';
+}> = ({ audioActive, notifications, onClearNotifications, currentLang = 'IT' }) => {
+  const [preset, setPreset] = useState<'ALL' | 'VALUE' | 'NEXT_GW' | 'AUCTIONS'>('ALL');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [positionFilter, setPositionFilter] = useState<'ALL' | 'GK' | 'DEF' | 'MID' | 'FWD'>('ALL');
+  const [statusFilter, setStatusFilter] = useState<'ALL' | 'TITOLARE' | 'IN ROTAZIONE'>('ALL');
+  const [leagueFilter, setLeagueFilter] = useState<string>('ALL');
+  const [drawerOpen, setDrawerOpen] = useState(false);
+
+  const leagues = useMemo(() => Array.from(new Set(DEMO_SCOUT_PLAYERS.map((item) => item.league))), []);
+
+  const filteredPlayers = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    let list = DEMO_SCOUT_PLAYERS.filter((player) => {
+      if (
+        q &&
+        !player.name.toLowerCase().includes(q) &&
+        !player.club.toLowerCase().includes(q) &&
+        !player.league.toLowerCase().includes(q)
+      ) {
+        return false;
+      }
+      if (positionFilter !== 'ALL' && player.position !== positionFilter) return false;
+      if (statusFilter !== 'ALL' && player.status !== statusFilter) return false;
+      if (leagueFilter !== 'ALL' && player.league !== leagueFilter) return false;
+      if (preset === 'VALUE' && player.valueRatio < 8.5) return false;
+      if (preset === 'NEXT_GW' && player.nextGwScore < 72) return false;
+      if (preset === 'AUCTIONS' && !player.isAuction) return false;
+      return true;
+    });
+
+    if (preset === 'VALUE') {
+      list = [...list].sort((a, b) => b.valueRatio - a.valueRatio);
+    } else if (preset === 'NEXT_GW') {
+      list = [...list].sort((a, b) => b.nextGwScore - a.nextGwScore);
+    } else if (preset === 'AUCTIONS') {
+      list = [...list].sort((a, b) => a.priceEur - b.priceEur);
+    }
+    return list;
+  }, [preset, searchQuery, positionFilter, statusFilter, leagueFilter]);
+
+  const resetFilters = () => {
+    setPreset('ALL');
+    setSearchQuery('');
+    setPositionFilter('ALL');
+    setStatusFilter('ALL');
+    setLeagueFilter('ALL');
+  };
+
+  const activeFilterCount =
+    (preset !== 'ALL' ? 1 : 0) +
+    (positionFilter !== 'ALL' ? 1 : 0) +
+    (statusFilter !== 'ALL' ? 1 : 0) +
+    (leagueFilter !== 'ALL' ? 1 : 0) +
+    (searchQuery.trim() ? 1 : 0);
+
+  return (
+    <div className="space-y-6 max-w-7xl mx-auto w-full">
+      <div className="flex justify-end items-center mb-2">
+      </div>
+      <div className="bg-[#16161a] border border-[#2a2a32] p-8 rounded-2xl flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 text-white shadow-md">
+        <div className="flex items-center space-x-4">
+          <div className="w-14 h-14 rounded-2xl bg-[#16161a] border border-[#2a2a32] flex items-center justify-center shadow-xl shrink-0">
+            <Search strokeWidth={2.8} className="h-7 w-7 text-[#00ff66]" style={{ filter: 'drop-shadow(0 0 14px #00ff66)' }} />
+          </div>
+          <div>
+            <h2 className="text-2xl font-bold">{translations[currentLang]?.scoutingManager || 'Scouting Manager'}</h2>
+            <p className="text-xs text-zinc-400 mt-0.5">{translations[currentLang]?.scoutingSubtitle || 'Cerca nuovi talenti e monitora il mercato.'}</p>
+          </div>
+        </div>
+        <span className="inline-flex items-center px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 self-start sm:self-auto">
+          Demo Locale · Solo Consultazione
+        </span>
+      </div>
+
+      <div className="bg-[#16161a] border border-[#2a2a32] rounded-2xl p-5 shadow-md space-y-4">
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setPreset('ALL')}
+            className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all border ${preset === 'ALL' ? 'bg-emerald-500/20 text-[#00ff66] border-[#00ff66]/60 shadow-[0_0_14px_rgba(0,255,102,0.35)]' : 'bg-[#0e0e12] text-zinc-300 border-[#2a2a32] hover:border-zinc-500'}`}
+          >
+            Tutti i giocatori
+          </button>
+          <button
+            type="button"
+            onClick={() => setPreset('VALUE')}
+            className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all border ${preset === 'VALUE' ? 'bg-emerald-500/20 text-[#00ff66] border-[#00ff66]/60 shadow-[0_0_14px_rgba(0,255,102,0.35)]' : 'bg-[#0e0e12] text-zinc-300 border-[#2a2a32] hover:border-zinc-500'}`}
+          >
+            Occasioni miglior rapporto qualità/prezzo
+          </button>
+          <button
+            type="button"
+            onClick={() => setPreset('NEXT_GW')}
+            className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all border ${preset === 'NEXT_GW' ? 'bg-emerald-500/20 text-[#00ff66] border-[#00ff66]/60 shadow-[0_0_14px_rgba(0,255,102,0.35)]' : 'bg-[#0e0e12] text-zinc-300 border-[#2a2a32] hover:border-zinc-500'}`}
+          >
+            Migliori giocatori prossima GW
+          </button>
+          <button
+            type="button"
+            onClick={() => setPreset('AUCTIONS')}
+            className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all border ${preset === 'AUCTIONS' ? 'bg-emerald-500/20 text-[#00ff66] border-[#00ff66]/60 shadow-[0_0_14px_rgba(0,255,102,0.35)]' : 'bg-[#0e0e12] text-zinc-300 border-[#2a2a32] hover:border-zinc-500'}`}
+          >
+            Aste
+          </button>
+        </div>
+
+        <div className="flex flex-col md:flex-row md:items-center gap-3 pt-1">
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Filtra per giocatore, club o competizione..."
+            className="flex-1 bg-[#0e0e12] border border-[#2a2a32] focus:border-emerald-500/60 rounded-xl px-4 py-2.5 text-sm text-white placeholder-zinc-500 outline-none"
+          />
+          <button
+            type="button"
+            onClick={() => setDrawerOpen((prev) => !prev)}
+            className="px-4 py-2.5 rounded-xl bg-[#22222b] hover:bg-[#2a2a36] border border-[#343442] text-xs font-bold text-white flex items-center justify-center gap-2 shrink-0"
+          >
+            <span>Filtri ({activeFilterCount})</span>
+          </button>
+          {activeFilterCount > 0 && (
+            <button
+              type="button"
+              onClick={resetFilters}
+              className="px-3.5 py-2.5 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/40 text-xs font-bold text-rose-300 shrink-0"
+            >
+              Elimina filtri
+            </button>
+          )}
+        </div>
+
+        {drawerOpen && (
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-3 border-t border-[#262630]">
+            <div>
+              <label className="block text-[11px] font-bold uppercase tracking-wider text-zinc-400 mb-1.5">Posizione</label>
+              <select
+                value={positionFilter}
+                onChange={(e) => setPositionFilter(e.target.value as any)}
+                className="w-full bg-[#0e0e12] border border-[#2a2a32] rounded-xl px-3 py-2 text-xs text-white outline-none"
+              >
+                <option value="ALL">Tutte le posizioni</option>
+                <option value="GK">Portieri (GK)</option>
+                <option value="DEF">Difensori (DEF)</option>
+                <option value="MID">Centrocampisti (MID)</option>
+                <option value="FWD">Attaccanti (FWD)</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-[11px] font-bold uppercase tracking-wider text-zinc-400 mb-1.5">Stato del giocatore</label>
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value as any)}
+                className="w-full bg-[#0e0e12] border border-[#2a2a32] rounded-xl px-3 py-2 text-xs text-white outline-none"
+              >
+                <option value="ALL">Tutti gli stati</option>
+                <option value="TITOLARE">Titolare</option>
+                <option value="IN ROTAZIONE">In rotazione</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-[11px] font-bold uppercase tracking-wider text-zinc-400 mb-1.5">League & Competizione</label>
+              <select
+                value={leagueFilter}
+                onChange={(e) => setLeagueFilter(e.target.value)}
+                className="w-full bg-[#0e0e12] border border-[#2a2a32] rounded-xl px-3 py-2 text-xs text-white outline-none"
+              >
+                <option value="ALL">Tutte le competizioni</option>
+                {leagues.map((lg: string) => (
+                  <option key={lg} value={lg}>{lg}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+        )}
+      </div>
+
+      <div className="bg-[#16161a] border border-[#2a2a32] rounded-2xl overflow-hidden shadow-xl">
+        <div className="px-6 py-4 border-b border-[#262630] flex flex-wrap items-center justify-between gap-2 text-xs text-zinc-400">
+          <span>Mostra risultati <strong className="text-white">{filteredPlayers.length}</strong> (anteprima demo locale)</span>
+          <span>Ordine: {preset === 'VALUE' ? 'Miglior qualità/prezzo' : preset === 'NEXT_GW' ? 'Proiezione prossima GW' : preset === 'AUCTIONS' ? 'Aste attive' : 'Standard'}</span>
+        </div>
+        <div className="divide-y divide-[#22222b]">
+          {filteredPlayers.map((player: ScoutPlayerItem) => (
+            <div key={player.id} className="p-4 sm:px-6 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 hover:bg-[#1c1c22] transition-colors">
+              <div className="min-w-[220px]">
+                <div className="flex items-center gap-2">
+                  <span className="font-bold text-white text-sm">{player.name}</span>
+                  <span className="px-2 py-0.5 rounded bg-[#0e0e12] border border-[#2a2a32] text-[10px] font-bold text-zinc-300">{player.position}</span>
+                </div>
+                <div className="text-xs text-zinc-400 mt-0.5">{player.club} · {player.age} anni · {player.league}</div>
+              </div>
+
+              <div className="flex items-center gap-4">
+                <div className="flex items-end gap-1 h-7">
+                  {player.trendBars.map((val: number, idx: number) => (
+                    <span
+                      key={idx}
+                      style={{ height: `${Math.max(20, Math.min(100, val))}%` }}
+                      className={`w-1.5 rounded-sm ${val >= 70 ? 'bg-emerald-400' : 'bg-zinc-500'}`}
+                    />
+                  ))}
+                </div>
+                <div className="text-xs text-zinc-300">
+                  <div>{player.gwFixture}</div>
+                  <div className="text-[11px] text-zinc-500">{player.status}</div>
+                </div>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-4 sm:gap-6 lg:justify-end">
+                <div className="text-right">
+                  <div className="text-[11px] text-zinc-400 uppercase">Prossima GW</div>
+                  <div className="text-sm font-black text-emerald-400">{player.nextGwScore.toFixed(1)}</div>
+                </div>
+                <div className="text-right">
+                  <div className="text-[11px] text-zinc-400 uppercase">Qualità / Prezzo</div>
+                  <div className="text-sm font-black text-amber-300">{player.valueRatio.toFixed(1)}x</div>
+                </div>
+                <div className="text-right min-w-[92px]">
+                  <div className="text-[11px] text-zinc-400 uppercase">{player.isAuction ? `Asta (${player.auctionEndsIn})` : 'Prezzo stim.'}</div>
+                  <div className="text-sm font-bold text-white">€ {player.priceEur.toFixed(2)}</div>
+                </div>
+              </div>
+            </div>
+          ))}
+          {filteredPlayers.length === 0 && (
+            <div className="p-12 text-center text-sm text-zinc-400">
+              Nessun giocatore trovato con i filtri selezionati.
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const GlobalTopRightBar: React.FC<{
+  t: (key: string) => string;
+  audioActive: boolean;
+  accountName?: string;
+  sorareAvatar?: string | null;
+  isSyncing: boolean;
+  userMenuOpen: boolean;
+  setUserMenuOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  onSyncClick: () => void;
+  onSelectLive: () => void;
+  onLogout: () => void;
+  notifications: AppNotification[];
+  onClearNotifications: () => void;
+  currentLang: 'IT' | 'EN' | 'FR' | 'ES';
+}> = ({
+  t,
+  audioActive,
+  accountName,
+  sorareAvatar,
+  isSyncing,
+  userMenuOpen,
+  setUserMenuOpen,
+  onSyncClick,
+  onSelectLive,
+  onLogout,
+  notifications,
+  onClearNotifications,
+  currentLang,
+}) => (
+  <div className="flex items-center space-x-2.5 z-30">
+    <button
+      type="button"
+      onMouseEnter={() => { if (audioActive) sounds.playHover(); }}
+      onClick={() => {
+        if (audioActive) sounds.playClick();
+        onSelectLive();
+      }}
+      className="px-4 h-12 rounded-2xl flex items-center space-x-2 bg-red-600/90 hover:bg-red-600 text-white font-black text-xs uppercase tracking-wider transition-all border-2 border-red-500 hover:border-red-400 active:shadow-[0_0_18px_rgba(239,68,68,0.75)] active:scale-95 cursor-pointer relative group"
+      title={t('liveScoresTitle') || 'Segui i punteggi in diretta'}
+    >
+      <span className="w-2.5 h-2.5 rounded-full bg-white shrink-0"></span>
+      <span className="tracking-widest">{t('live') || 'LIVE'}</span>
+    </button>
+
+    {accountName && (
+      <button
+        type="button"
+        onMouseEnter={() => { if (audioActive) sounds.playHover(); }}
+        onClick={onSyncClick}
+        disabled={isSyncing}
+        className="w-12 h-12 rounded-2xl flex items-center justify-center transition-all relative group bg-[#16161a] hover:bg-[#202028] border-2 border-zinc-700 hover:border-indigo-500 active:border-indigo-400 active:shadow-[0_0_16px_rgba(99,102,241,0.65)] active:scale-95 cursor-pointer disabled:opacity-55"
+        title={t('syncAccount') || 'Sincronizza account'}
+      >
+        <RefreshCw className={`h-5 w-5 text-indigo-400 transition-transform ${isSyncing ? 'animate-spin' : 'group-hover:scale-110'}`} />
+      </button>
+    )}
+
+    <NotificationBell
+      audioActive={audioActive}
+      notifications={notifications}
+      onClearNotifications={onClearNotifications}
+      currentLang={currentLang}
+    />
+
+    {accountName && (
+      <div className="relative">
+        <button
+          type="button"
+          onClick={() => {
+            if (audioActive) sounds.playClick();
+            setUserMenuOpen(!userMenuOpen);
+          }}
+          onMouseEnter={() => { if (audioActive) sounds.playHover(); }}
+          className="flex items-center space-x-2.5 bg-[#16161a] hover:bg-[#202028] border-2 border-[#2a2a32] hover:border-zinc-600 active:border-indigo-400 active:shadow-[0_0_16px_rgba(99,102,241,0.55)] active:scale-[0.98] px-3 py-1.5 rounded-2xl cursor-pointer transition-all h-12"
+        >
+          <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-indigo-600 to-purple-600 border border-indigo-400/40 flex items-center justify-center overflow-hidden shrink-0">
+            {sorareAvatar ? (
+              <img
+                src={sorareAvatar}
+                alt={accountName}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <img
+                src="https://images.sorare.com/users/default.png"
+                alt="Sorare Default"
+                className="w-full h-full object-cover"
+              />
+            )}
+          </div>
+          <div className="text-left">
+            <p className="text-xs font-black text-white tracking-wide leading-tight">{accountName}</p>
+            <p className="text-[10px] font-bold text-emerald-400 leading-tight">{t('connected') || 'Connesso'}</p>
+          </div>
+          <ChevronDown className={`h-4 w-4 text-zinc-400 transition-transform ${userMenuOpen ? 'rotate-180' : ''}`} />
+        </button>
+
+        {userMenuOpen && (
+          <div className="absolute right-0 mt-2 w-56 bg-[#16161a] border border-[#2a2a32] rounded-2xl p-2 shadow-2xl z-50 space-y-1">
+            <div className="px-3 py-2 border-b border-[#282834]">
+              <p className="text-[10px] font-bold text-zinc-400 uppercase">{t('sorareAccount') || 'Account Sorare'}</p>
+              <p className="text-xs font-black text-white truncate">{accountName}</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                setUserMenuOpen(false);
+                if (audioActive) sounds.playClick();
+                onLogout();
+              }}
+              className="w-full flex items-center space-x-2 px-3 py-2 rounded-xl text-xs font-bold text-red-400 hover:bg-red-500/20 transition-all cursor-pointer"
+            >
+              <LogOut className="h-4 w-4" />
+              <span>{t('disconnect') || 'Disconnetti'}</span>
+            </button>
+          </div>
+        )}
+      </div>
+    )}
+  </div>
+);
 
 export default function App() {
   const [calGameWeeks] = useState<any[]>(() => {
@@ -2954,6 +3436,32 @@ export default function App() {
   
   const [token, setToken] = useState<string>(() => localStorage.getItem('sorare_token') || '');
   const [accountName, setAccountName] = useState<string>(() => localStorage.getItem('sorare_account_name') || '');
+  const [globalUserMenuOpen, setGlobalUserMenuOpen] = useState(false);
+  const [globalSyncing, setGlobalSyncing] = useState(false);
+  const [globalSyncSuccess, setGlobalSyncSuccess] = useState(false);
+  const globalAccountName = (typeof accountName === 'string' && accountName) ? accountName : 'Pilot';
+  const globalSorareAvatar: string | null = (() => {
+    try {
+      return localStorage.getItem('sorare_avatar') || localStorage.getItem('sorareAvatar') || null;
+    } catch {
+      return null;
+    }
+  })();
+  const globalT = (key: string) => translations[currentLang]?.[key] || key;
+  const handleGlobalSync = () => {
+    if (globalSyncing) return;
+    if (audioActive) sounds.playClick();
+    setGlobalSyncing(true);
+    setTimeout(() => {
+      setGlobalSyncing(false);
+      setGlobalSyncSuccess(true);
+      setTimeout(() => setGlobalSyncSuccess(false), 2000);
+    }, 450);
+  };
+  const handleGlobalLogout = () => {
+    setGlobalUserMenuOpen(false);
+    try { localStorage.removeItem('sorare_account_name'); localStorage.removeItem('sorare_account'); localStorage.removeItem('sorare_token'); localStorage.removeItem('sorare_avatar'); } catch {}
+  };
   const [accountAvatarUrl, setAccountAvatarUrl] = useState<string>(() => localStorage.getItem('sorare_account_avatar') || '');
   const [isLoading, setIsLoading] = useState(false);
   const [isBackgroundSyncing, setIsBackgroundSyncing] = useState(false);
@@ -3342,6 +3850,31 @@ export default function App() {
       />
 
       <main className={`flex-1 min-w-0 px-6 sm:px-10 pt-8 max-w-[1440px] mx-auto block ${activeTab === 'HOME' ? 'overflow-y-auto pb-8' : 'overflow-y-auto custom-scrollbar pb-16'}`}>
+        {activeTab !== 'HOME' && (
+          <div className="w-full flex justify-end mb-4 px-2">
+            <GlobalTopRightBar
+              t={globalT}
+              audioActive={Boolean(audioActive)}
+              accountName={globalAccountName}
+              sorareAvatar={accountAvatarUrl || globalSorareAvatar || null}
+              isSyncing={globalSyncing}
+              userMenuOpen={globalUserMenuOpen}
+              setUserMenuOpen={setGlobalUserMenuOpen}
+              onSyncClick={handleGlobalSync}
+              onSelectLive={() => setActiveTab('LIVE')}
+              onLogout={handleGlobalLogout}
+              notifications={notifications}
+              onClearNotifications={handleClearNotifications}
+              currentLang={currentLang}
+            />
+          </div>
+        )}
+        {globalSyncSuccess && (
+          <div className="fixed bottom-5 right-5 bg-emerald-950/90 border border-emerald-500/60 px-5 py-2.5 rounded-2xl shadow-[0_0_16px_rgba(16,185,129,0.35)] flex items-center space-x-2.5 z-50 animate-bounce">
+            <CheckCircle2 className="h-5 w-5 text-emerald-400" />
+            <span className="text-xs font-black text-emerald-200 tracking-wide">{globalT('syncComplete') || 'Sincronizzazione completata'}</span>
+          </div>
+        )}
         {errorMessage && (
           <div className="bg-red-500/10 border border-red-500/30 text-red-400 p-4 rounded-xl flex items-center justify-between text-xs font-bold mb-4 shrink-0">
             <span>{errorMessage}</span>
@@ -3933,26 +4466,12 @@ export default function App() {
               />
             )}
             {activeTab === 'SCOUTING' && (
-              <div className="space-y-6 max-w-7xl mx-auto w-full">
-                <div className="flex justify-between items-center bg-[#16161a] border border-[#2a2a32] p-6 rounded-2xl shadow-md">
-                  <div>
-                    <h2 className="text-2xl font-bold text-white">{translations[currentLang]?.scoutingManager || 'Scouting Manager'}</h2>
-                    <p className="text-xs text-zinc-400 mt-1">{translations[currentLang]?.scoutingSubtitle || 'Cerca nuovi talenti e monitora il mercato.'}</p>
-                  </div>
-                </div>
-
-                <div className="bg-[#16161a] border border-[#2a2a32] p-20 rounded-2xl flex flex-col items-center justify-center text-center space-y-4 shadow-xl">
-                  <div className="w-16 h-16 rounded-2xl bg-[#0e0e12] border border-[#2a2a32] flex items-center justify-center shadow-inner">
-                    <Hourglass className="h-8 w-8 text-amber-400 animate-spin" />
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-black text-white uppercase tracking-wider">{translations[currentLang]?.SCOUTING || 'SCOUTING'}</h3>
-                    <div className="mt-3 inline-block px-4 py-1.5 rounded-full bg-[#0e0e12] border border-[#2a2a32] text-xs font-bold text-zinc-300 tracking-widest uppercase shadow">
-                      {translations[currentLang]?.comingSoon || 'Prossimamente'}
-                    </div>
-                  </div>
-                </div>
-              </div>
+              <ScoutingModule
+                audioActive={Boolean(audioActive)}
+                notifications={notifications}
+                onClearNotifications={handleClearNotifications}
+                currentLang={currentLang}
+              />
             )}
             {activeTab === 'ARENA' && (
               <LineupsModule 
